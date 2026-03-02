@@ -17,5 +17,8 @@ namespace LibraryManagement.Models
 
         public bool IsOverdue =>
             TrangThai == "Đang mượn" && DateTime.Now > NgayHenTra;
+
+        public int SoNgayQuaHan =>
+            IsOverdue ? (int)(DateTime.Now - NgayHenTra).TotalDays : 0;
     }
 }

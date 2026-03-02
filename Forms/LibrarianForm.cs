@@ -16,28 +16,19 @@ namespace LibraryManagement.Forms
 
         public LibrarianForm()
         {
-            InitializeComponent();
-            NavigateTo(0);
-        }
-
-        private void InitializeComponent()
-        {
-            Text = "Thủ thư - Hệ thống Quản lý Thư viện";
-            Size = new Size(1400, 850);
+            Text = "Thủ thư - Thư viện ĐH Thủy Lợi";
+            Size = new Size(1280, 800);
             StartPosition = FormStartPosition.CenterScreen;
-            MinimumSize = new Size(1200, 700);
             BackColor = ThemeColors.Background;
-            DoubleBuffered = true;
+            MinimumSize = new Size(1024, 600);
 
-            // === SIDEBAR ===
-            Panel sidebar = new Panel { Dock = DockStyle.Left, Width = ThemeColors.SidebarWidth, BackColor = ThemeColors.SidebarBackground };
+            // --- Sidebar ---
+            var sidebar = new Panel { Width = ThemeColors.SidebarWidth, Dock = DockStyle.Left, BackColor = ThemeColors.SidebarBackground };
 
-            // Logo
-            Panel logoPanel = new Panel { Dock = DockStyle.Top, Height = 80, BackColor = Color.Transparent };
+            var logoPanel = new Panel { Height = 80, Dock = DockStyle.Top, BackColor = Color.FromArgb(20, 255, 255, 255) };
             logoPanel.Paint += (s, e) =>
             {
-                var g = e.Graphics;
-                g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+                var g = e.Graphics; g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
                 using (var b = new SolidBrush(Color.White)) g.DrawString("\uE736", new Font("Segoe MDL2 Assets", 24), b, 20, 18);
                 using (var b = new SolidBrush(Color.White)) g.DrawString("THƯ VIỆN", new Font("Segoe UI", 16, FontStyle.Bold), b, 68, 14);
                 using (var b = new SolidBrush(Color.FromArgb(150, 255, 255, 255))) g.DrawString("Giao diện Thủ thư", ThemeColors.SmallFont, b, 70, 44);
@@ -45,46 +36,43 @@ namespace LibraryManagement.Forms
             };
             sidebar.Controls.Add(logoPanel);
 
-            // User info
             var cu = UserStore.CurrentUser;
-            Panel userPanel = new Panel { Dock = DockStyle.Top, Height = 56, BackColor = Color.FromArgb(30, 255, 255, 255) };
+            var userPanel = new Panel { Height = 50, Dock = DockStyle.Top, BackColor = Color.Transparent };
             userPanel.Paint += (s, e) =>
             {
                 var g = e.Graphics; g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-                using (var b = new SolidBrush(Color.White)) g.DrawString(cu?.HoTen ?? "Thủ thư", ThemeColors.SubTitleFont, b, 16, 8);
-                using (var b = new SolidBrush(Color.FromArgb(180, 255, 255, 255))) g.DrawString("Thủ thư", ThemeColors.SmallFont, b, 16, 32);
+                using (var b = new SolidBrush(Color.White)) g.DrawString(cu?.HoTen ?? "Thủ thư", new Font("Segoe UI Semibold", 10), b, 20, 8);
+                using (var b = new SolidBrush(Color.FromArgb(150, 255, 255, 255))) g.DrawString(cu?.RoleDisplay ?? "", ThemeColors.SmallFont, b, 20, 28);
             };
             sidebar.Controls.Add(userPanel);
 
-            // Menu
             string[][] menuItems = {
                 new[] { "\uE80F", "Trang chủ" },
-                new[] { "\uE736", "Quản lý sách" },
-                new[] { "\uE716", "Quản lý độc giả" },
-                new[] { "\uE8C8", "Mượn - Trả sách" },
-                new[] { "\uE7B8", "Kiểm kê kho" },
+                new[] { "\uE736", "Cập nhật danh mục" },
+                new[] { "\uE8C8", "Phân loại sách" },
+                new[] { "\uE762", "Quản lý mượn trả" },
+                new[] { "\uE7BA", "Quản lý quá hạn" },
+                new[] { "\uE7A8", "Báo cáo thống kê" },
             };
 
             menuButtons = new SidebarButton[menuItems.Length];
-            int y = 150;
+            int y = 0;
             for (int i = 0; i < menuItems.Length; i++)
             {
+                var btn = new SidebarButton { IconText = menuItems[i][0], Text = menuItems[i][1], Location = new Point(0, y) };
                 int idx = i;
-                var btn = new SidebarButton { IconText = menuItems[i][0], Text = menuItems[i][1], Location = new Point(0, y), Size = new Size(ThemeColors.SidebarWidth, 50) };
                 btn.Click += (s, e) => NavigateTo(idx);
                 menuButtons[i] = btn;
                 sidebar.Controls.Add(btn);
                 y += 50;
             }
 
-            // Logout
             var btnLogout = new SidebarButton { IconText = "\uE72B", Text = "Đăng xuất", Dock = DockStyle.Bottom, Size = new Size(ThemeColors.SidebarWidth, 50) };
             btnLogout.Click += (s, e) => { if (MessageBox.Show("Bạn có chắc chắn muốn đăng xuất?", "Đăng xuất", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes) { UserStore.CurrentUser = null; Close(); } };
             sidebar.Controls.Add(btnLogout);
             Controls.Add(sidebar);
 
-            // === HEADER ===
-            Panel header = new Panel { Dock = DockStyle.Top, Height = ThemeColors.HeaderHeight, BackColor = ThemeColors.HeaderBackground };
+            var header = new Panel { Height = ThemeColors.HeaderHeight, Dock = DockStyle.Top, BackColor = ThemeColors.HeaderBackground };
             header.Paint += (s, e) =>
             {
                 var g = e.Graphics; g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
@@ -93,25 +81,26 @@ namespace LibraryManagement.Forms
             };
             Controls.Add(header);
 
-            // === CONTENT ===
             contentPanel = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.Background };
             Controls.Add(contentPanel);
-            contentPanel.BringToFront();
+
+            NavigateTo(0);
         }
 
         private void NavigateTo(int index)
         {
-            foreach (var b in menuButtons) b.IsActive = false;
+            foreach (var btn in menuButtons) btn.IsActive = false;
             menuButtons[index].IsActive = true;
-            contentPanel.Controls.Clear();
 
+            contentPanel.Controls.Clear();
             UserControl panel = index switch
             {
                 0 => new LibrarianDashboard(),
-                1 => new BookPanel(),
-                2 => new ReaderPanel(),
-                3 => new BorrowPanel(),
-                4 => new InventoryPanel(),
+                1 => new CatalogPanel(),
+                2 => new ClassifyPanel(),
+                3 => new BorrowManagePanel(),
+                4 => new OverduePanel(),
+                5 => new ReportPanel(),
                 _ => new LibrarianDashboard()
             };
             panel.Dock = DockStyle.Fill;
