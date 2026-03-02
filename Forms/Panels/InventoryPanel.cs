@@ -31,10 +31,10 @@ namespace LibraryManagement.Forms.Panels
             int categories = SampleData.Categories.Count;
             int outOfStock = books.Count(b => b.SoLuong == 0 || b.TrangThai == "Hết sách");
 
-            var card1 = new StatCard { Title = "Tổng đầu sách", Value = books.Count.ToString(), IconText = "📚", AccentColor = ThemeColors.Primary, Location = new Point(32, 96), Size = new Size(200, 100) };
-            var card2 = new StatCard { Title = "Tổng số bản", Value = total.ToString(), IconText = "📖", AccentColor = ThemeColors.Success, Location = new Point(248, 96), Size = new Size(200, 100) };
-            var card3 = new StatCard { Title = "Thể loại", Value = categories.ToString(), IconText = "🏷️", AccentColor = ThemeColors.Warning, Location = new Point(464, 96), Size = new Size(200, 100) };
-            var card4 = new StatCard { Title = "Hết sách", Value = outOfStock.ToString(), IconText = "⚠️", AccentColor = ThemeColors.Danger, Location = new Point(680, 96), Size = new Size(200, 100) };
+            var card1 = new StatCard { Title = "Tổng đầu sách", Value = books.Count.ToString(), IconText = "\uE736", AccentColor = ThemeColors.Primary, Location = new Point(32, 96), Size = new Size(200, 100) };
+            var card2 = new StatCard { Title = "Tổng số bản", Value = total.ToString(), IconText = "\uE736", AccentColor = ThemeColors.Success, Location = new Point(248, 96), Size = new Size(200, 100) };
+            var card3 = new StatCard { Title = "Thể loại", Value = categories.ToString(), IconText = "\uE8EC", AccentColor = ThemeColors.Warning, Location = new Point(464, 96), Size = new Size(200, 100) };
+            var card4 = new StatCard { Title = "Hết sách", Value = outOfStock.ToString(), IconText = "\uE7BA", AccentColor = ThemeColors.Danger, Location = new Point(680, 96), Size = new Size(200, 100) };
             Controls.Add(card1); Controls.Add(card2); Controls.Add(card3); Controls.Add(card4);
 
             // Inventory table

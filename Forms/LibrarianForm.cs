@@ -38,7 +38,7 @@ namespace LibraryManagement.Forms
             {
                 var g = e.Graphics;
                 g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-                using (var b = new SolidBrush(Color.White)) g.DrawString("📚", new Font("Segoe UI Emoji", 24), b, 20, 18);
+                using (var b = new SolidBrush(Color.White)) g.DrawString("\uE736", new Font("Segoe MDL2 Assets", 24), b, 20, 18);
                 using (var b = new SolidBrush(Color.White)) g.DrawString("THƯ VIỆN", new Font("Segoe UI", 16, FontStyle.Bold), b, 68, 14);
                 using (var b = new SolidBrush(Color.FromArgb(150, 255, 255, 255))) g.DrawString("Giao diện Thủ thư", ThemeColors.SmallFont, b, 70, 44);
                 using (var pen = new Pen(Color.FromArgb(40, 255, 255, 255))) g.DrawLine(pen, 20, 79, ThemeColors.SidebarWidth - 20, 79);
@@ -58,11 +58,11 @@ namespace LibraryManagement.Forms
 
             // Menu
             string[][] menuItems = {
-                new[] { "🏠", "Trang chủ" },
-                new[] { "📚", "Quản lý sách" },
-                new[] { "👥", "Quản lý độc giả" },
-                new[] { "📋", "Mượn - Trả sách" },
-                new[] { "📦", "Kiểm kê kho" },
+                new[] { "\uE80F", "Trang chủ" },
+                new[] { "\uE736", "Quản lý sách" },
+                new[] { "\uE716", "Quản lý độc giả" },
+                new[] { "\uE8C8", "Mượn - Trả sách" },
+                new[] { "\uE7B8", "Kiểm kê kho" },
             };
 
             menuButtons = new SidebarButton[menuItems.Length];
@@ -78,7 +78,7 @@ namespace LibraryManagement.Forms
             }
 
             // Logout
-            var btnLogout = new SidebarButton { IconText = "🚪", Text = "Đăng xuất", Dock = DockStyle.Bottom, Size = new Size(ThemeColors.SidebarWidth, 50) };
+            var btnLogout = new SidebarButton { IconText = "\uE72B", Text = "Đăng xuất", Dock = DockStyle.Bottom, Size = new Size(ThemeColors.SidebarWidth, 50) };
             btnLogout.Click += (s, e) => { if (MessageBox.Show("Bạn có chắc chắn muốn đăng xuất?", "Đăng xuất", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes) { UserStore.CurrentUser = null; Close(); } };
             sidebar.Controls.Add(btnLogout);
             Controls.Add(sidebar);

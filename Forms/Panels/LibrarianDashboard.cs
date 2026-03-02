@@ -32,10 +32,10 @@ namespace LibraryManagement.Forms.Panels
             int borrowed = borrows.Count(b => b.NgayTraThuc == null);
             int overdue = borrows.Count(b => b.IsOverdue);
 
-            var card1 = new StatCard { Title = "Tổng số sách", Value = totalBooks.ToString(), IconText = "📚", AccentColor = ThemeColors.Primary, Location = new Point(32, 100), Size = new Size(220, 110) };
-            var card2 = new StatCard { Title = "Đang cho mượn", Value = borrowed.ToString(), IconText = "📖", AccentColor = ThemeColors.Warning, Location = new Point(268, 100), Size = new Size(220, 110) };
-            var card3 = new StatCard { Title = "Sách quá hạn", Value = overdue.ToString(), IconText = "⚠️", AccentColor = ThemeColors.Danger, Location = new Point(504, 100), Size = new Size(220, 110) };
-            var card4 = new StatCard { Title = "Tổng độc giả", Value = SampleData.Readers.Count.ToString(), IconText = "👥", AccentColor = ThemeColors.Success, Location = new Point(740, 100), Size = new Size(220, 110) };
+            var card1 = new StatCard { Title = "Tổng số sách", Value = totalBooks.ToString(), IconText = "\uE736", AccentColor = ThemeColors.Primary, Location = new Point(32, 100), Size = new Size(220, 110) };
+            var card2 = new StatCard { Title = "Đang cho mượn", Value = borrowed.ToString(), IconText = "\uE736", AccentColor = ThemeColors.Warning, Location = new Point(268, 100), Size = new Size(220, 110) };
+            var card3 = new StatCard { Title = "Sách quá hạn", Value = overdue.ToString(), IconText = "\uE7BA", AccentColor = ThemeColors.Danger, Location = new Point(504, 100), Size = new Size(220, 110) };
+            var card4 = new StatCard { Title = "Tổng độc giả", Value = SampleData.Readers.Count.ToString(), IconText = "\uE716", AccentColor = ThemeColors.Success, Location = new Point(740, 100), Size = new Size(220, 110) };
             Controls.Add(card1); Controls.Add(card2); Controls.Add(card3); Controls.Add(card4);
 
             // Recent activity
@@ -47,7 +47,7 @@ namespace LibraryManagement.Forms.Panels
                 using (var bg = new SolidBrush(Color.White)) g.FillPath(bg, path);
             };
 
-            activityCard.Controls.Add(new Label { Text = "🕐  Hoạt động gần đây", Font = ThemeColors.SubTitleFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(20, 16), Size = new Size(400, 28), BackColor = Color.Transparent });
+            activityCard.Controls.Add(new Label { Text = "Hoạt động gần đây", Font = ThemeColors.SubTitleFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(20, 16), Size = new Size(400, 28), BackColor = Color.Transparent });
 
             int ay = 52;
             foreach (var log in UserStore.Logs.OrderByDescending(l => l.ThoiGian).Take(6))
@@ -67,7 +67,7 @@ namespace LibraryManagement.Forms.Panels
                 using (var path = ThemeColors.GetRoundedRect(new Rectangle(2, 2, quickCard.Width - 6, quickCard.Height - 6), 12))
                 using (var bg = new SolidBrush(Color.White)) g.FillPath(bg, path);
             };
-            quickCard.Controls.Add(new Label { Text = "⚡  Thao tác nhanh", Font = ThemeColors.SubTitleFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(16, 16), Size = new Size(190, 28), BackColor = Color.Transparent });
+            quickCard.Controls.Add(new Label { Text = "Thao tác nhanh", Font = ThemeColors.SubTitleFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(16, 16), Size = new Size(190, 28), BackColor = Color.Transparent });
 
             var btnAddBook = new RoundedButton { Text = "Thêm sách mới", Size = new Size(188, 42), Location = new Point(16, 56), ButtonColor = ThemeColors.Primary, Font = ThemeColors.ButtonFont };
             var btnBorrow = new RoundedButton { Text = "Cho mượn sách", Size = new Size(188, 42), Location = new Point(16, 110), ButtonColor = ThemeColors.Success, Font = ThemeColors.ButtonFont };

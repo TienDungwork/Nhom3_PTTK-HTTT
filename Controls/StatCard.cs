@@ -71,7 +71,7 @@ namespace LibraryManagement.Controls
                 LineAlignment = StringAlignment.Center
             })
             {
-                g.DrawString(IconText, new Font("Segoe UI Emoji", 18), new SolidBrush(AccentColor), iconBg, sf);
+                g.DrawString(IconText, new Font("Segoe MDL2 Assets", 18), new SolidBrush(AccentColor), iconBg, sf);
             }
 
             // Value

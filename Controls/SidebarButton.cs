@@ -72,7 +72,7 @@ namespace LibraryManagement.Controls
             })
             {
                 Rectangle iconRect = new Rectangle(20, 0, 36, Height);
-                g.DrawString(IconText, new Font("Segoe UI Emoji", 14), iconBrush, iconRect, sf);
+                g.DrawString(IconText, new Font("Segoe MDL2 Assets", 14), iconBrush, iconRect, sf);
             }
 
             // Text

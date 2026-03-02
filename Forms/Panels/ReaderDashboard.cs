@@ -27,9 +27,9 @@ namespace LibraryManagement.Forms.Panels
             string nearestDate = nearest != null ? nearest.NgayHenTra.ToString("dd/MM/yyyy") : "Không có";
             int totalHistory = SampleData.BorrowRecords.Count();
 
-            var card1 = new StatCard { Title = "Sách đang mượn", Value = borrows.Count.ToString(), IconText = "📖", AccentColor = ColorTranslator.FromHtml("#10B981"), Location = new Point(32, 100), Size = new Size(240, 110) };
-            var card2 = new StatCard { Title = "Hạn trả gần nhất", Value = nearestDate, IconText = "📅", AccentColor = ThemeColors.Warning, Location = new Point(290, 100), Size = new Size(240, 110) };
-            var card3 = new StatCard { Title = "Lịch sử mượn", Value = totalHistory.ToString() + " lượt", IconText = "📊", AccentColor = ThemeColors.Primary, Location = new Point(548, 100), Size = new Size(240, 110) };
+            var card1 = new StatCard { Title = "Sách đang mượn", Value = borrows.Count.ToString(), IconText = "\uE736", AccentColor = ColorTranslator.FromHtml("#10B981"), Location = new Point(32, 100), Size = new Size(240, 110) };
+            var card2 = new StatCard { Title = "Hạn trả gần nhất", Value = nearestDate, IconText = "\uE787", AccentColor = ThemeColors.Warning, Location = new Point(290, 100), Size = new Size(240, 110) };
+            var card3 = new StatCard { Title = "Lịch sử mượn", Value = totalHistory.ToString() + " lượt", IconText = "\uE7A8", AccentColor = ThemeColors.Primary, Location = new Point(548, 100), Size = new Size(240, 110) };
             Controls.Add(card1); Controls.Add(card2); Controls.Add(card3);
 
             // Currently borrowed books
@@ -40,7 +40,7 @@ namespace LibraryManagement.Forms.Panels
                 using (var path = ThemeColors.GetRoundedRect(new Rectangle(2, 2, borrowCard.Width - 6, borrowCard.Height - 6), 12))
                 using (var bg = new SolidBrush(Color.White)) g.FillPath(bg, path);
             };
-            borrowCard.Controls.Add(new Label { Text = "📋  Sách đang mượn", Font = ThemeColors.SubTitleFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(20, 16), Size = new Size(400, 28), BackColor = Color.Transparent });
+            borrowCard.Controls.Add(new Label { Text = "Sách đang mượn", Font = ThemeColors.SubTitleFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(20, 16), Size = new Size(400, 28), BackColor = Color.Transparent });
 
             int by = 52;
             foreach (var b in borrows)
@@ -69,7 +69,7 @@ namespace LibraryManagement.Forms.Panels
                 using (var bg = new SolidBrush(Color.White)) g.FillPath(bg, path);
             };
             int unread = UserStore.Notifications.Count(n => !n.DaDoc);
-            notifCard.Controls.Add(new Label { Text = $"🔔  Thông báo ({unread} chưa đọc)", Font = ThemeColors.SubTitleFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(20, 16), Size = new Size(400, 28), BackColor = Color.Transparent });
+            notifCard.Controls.Add(new Label { Text = $"Thông báo ({unread} chưa đọc)", Font = ThemeColors.SubTitleFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(20, 16), Size = new Size(400, 28), BackColor = Color.Transparent });
             int ny = 52;
             foreach (var n in UserStore.Notifications.Take(3))
             {

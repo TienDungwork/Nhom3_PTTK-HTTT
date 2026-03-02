@@ -26,10 +26,10 @@ namespace LibraryManagement.Forms.Panels
             int librarians = UserStore.Users.Count(u => u.Role == UserRole.ThuThu);
             int readers = UserStore.Users.Count(u => u.Role == UserRole.DocGia);
 
-            var card1 = new StatCard { Title = "Tổng tài khoản", Value = totalUsers.ToString(), IconText = "👥", AccentColor = ColorTranslator.FromHtml("#8B5CF6"), Location = new Point(32, 100), Size = new Size(220, 110) };
-            var card2 = new StatCard { Title = "Quản trị viên", Value = admins.ToString(), IconText = "🛡️", AccentColor = ThemeColors.Danger, Location = new Point(268, 100), Size = new Size(220, 110) };
-            var card3 = new StatCard { Title = "Thủ thư", Value = librarians.ToString(), IconText = "📚", AccentColor = ThemeColors.Primary, Location = new Point(504, 100), Size = new Size(220, 110) };
-            var card4 = new StatCard { Title = "Độc giả", Value = readers.ToString(), IconText = "📖", AccentColor = ThemeColors.Success, Location = new Point(740, 100), Size = new Size(220, 110) };
+            var card1 = new StatCard { Title = "Tổng tài khoản", Value = totalUsers.ToString(), IconText = "\uE716", AccentColor = ColorTranslator.FromHtml("#8B5CF6"), Location = new Point(32, 100), Size = new Size(220, 110) };
+            var card2 = new StatCard { Title = "Quản trị viên", Value = admins.ToString(), IconText = "\uE83D", AccentColor = ThemeColors.Danger, Location = new Point(268, 100), Size = new Size(220, 110) };
+            var card3 = new StatCard { Title = "Thủ thư", Value = librarians.ToString(), IconText = "\uE736", AccentColor = ThemeColors.Primary, Location = new Point(504, 100), Size = new Size(220, 110) };
+            var card4 = new StatCard { Title = "Độc giả", Value = readers.ToString(), IconText = "\uE736", AccentColor = ThemeColors.Success, Location = new Point(740, 100), Size = new Size(220, 110) };
             Controls.Add(card1); Controls.Add(card2); Controls.Add(card3); Controls.Add(card4);
 
             // Role distribution chart
@@ -81,7 +81,7 @@ namespace LibraryManagement.Forms.Panels
                 using (var path = ThemeColors.GetRoundedRect(new Rectangle(2, 2, actCard.Width - 6, actCard.Height - 6), 12))
                 using (var bg = new SolidBrush(Color.White)) g.FillPath(bg, path);
             };
-            actCard.Controls.Add(new Label { Text = "🕐  Hoạt động hệ thống", Font = ThemeColors.SubTitleFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(20, 16), Size = new Size(400, 28), BackColor = Color.Transparent });
+            actCard.Controls.Add(new Label { Text = "Hoạt động hệ thống", Font = ThemeColors.SubTitleFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(20, 16), Size = new Size(400, 28), BackColor = Color.Transparent });
 
             int ay = 52;
             foreach (var log in UserStore.Logs.OrderByDescending(l => l.ThoiGian).Take(5))
