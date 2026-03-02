@@ -16,7 +16,7 @@ namespace LibraryManagement.Forms.Panels
             Dock = DockStyle.Fill;
             BackColor = ThemeColors.Background;
 
-            Controls.Add(new Label { Text = "LỊCH SỬ MƯỢN SÁCH", Font = ThemeColors.HeaderFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(32, 20), Size = new Size(400, 40), BackColor = Color.Transparent });
+            Controls.Add(new Label { Text = "LỊCH SỬ MƯỢN SÁCH", Font = ThemeColors.HeaderFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(32, 20), Size = new Size(400, 40), BackColor = Color.Transparent, Anchor = AnchorStyles.Top | AnchorStyles.Left });
             Controls.Add(new Label { Text = "Toàn bộ lịch sử mượn trả sách của bạn", Font = ThemeColors.BodyFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(32, 60), Size = new Size(500, 22), BackColor = Color.Transparent });
 
             var dgv = new DataGridView { Location = new Point(32, 96), Size = new Size(920, 560), Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom };

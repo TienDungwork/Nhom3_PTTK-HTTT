@@ -22,7 +22,7 @@ namespace LibraryManagement.Forms.Panels
             Controls.Add(new Label { Text = "Xem và quản lý tất cả phiếu mượn trả sách", Font = ThemeColors.BodyFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(32, 60), Size = new Size(500, 22), BackColor = Color.Transparent });
 
             // Search bar
-            var txtSearch = new TextBox { Location = new Point(32, 96), Size = new Size(300, 32), Font = ThemeColors.BodyFont, BorderStyle = BorderStyle.FixedSingle };
+            var txtSearch = new TextBox { Location = new Point(32, 96), Size = new Size(300, 32), Font = ThemeColors.BodyFont, BorderStyle = BorderStyle.FixedSingle, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
             txtSearch.PlaceholderText = "Tìm theo tên độc giả hoặc mã sách...";
             txtSearch.TextChanged += (s, e) => FilterRecords(txtSearch.Text);
             Controls.Add(txtSearch);

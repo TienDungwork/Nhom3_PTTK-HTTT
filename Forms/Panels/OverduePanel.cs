@@ -25,6 +25,7 @@ namespace LibraryManagement.Forms.Panels
 
             // Filter bar
             var filterCard = new Panel { Location = new Point(32, 92), Size = new Size(920, 70), BackColor = Color.White, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
+            filterCard.Padding = new Padding(8);
             filterCard.Paint += (s, e) =>
             {
                 using var path = ThemeColors.GetRoundedRect(new Rectangle(0, 0, filterCard.Width - 2, filterCard.Height - 2), 12);

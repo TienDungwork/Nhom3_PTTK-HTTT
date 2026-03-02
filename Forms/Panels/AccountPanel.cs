@@ -24,6 +24,7 @@ namespace LibraryManagement.Forms.Panels
 
             // Toolbar
             var toolbar = new Panel { Location = new Point(32, 92), Size = new Size(920, 52), BackColor = Color.White, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
+            toolbar.Padding = new Padding(8);
             toolbar.Paint += (s, e) =>
             {
                 using var path = ThemeColors.GetRoundedRect(new Rectangle(0, 0, toolbar.Width - 2, toolbar.Height - 2), 12);

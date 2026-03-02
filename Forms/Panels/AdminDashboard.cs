@@ -10,15 +10,21 @@ namespace LibraryManagement.Forms.Panels
 {
     public class AdminDashboard : UserControl
     {
+        private StatCard[] cards = null!;
+        private Panel chartCard = null!;
+        private Panel actCard = null!;
+
         public AdminDashboard()
         {
             DoubleBuffered = true; Dock = DockStyle.Fill; BackColor = ThemeColors.Background; AutoScroll = true;
             InitializeUI();
+            Resize += (s, e) => LayoutCards();
+            Load += (s, e) => LayoutCards();
         }
 
         private void InitializeUI()
         {
-            Controls.Add(new Label { Text = "BẢNG ĐIỀU KHIỂN", Font = ThemeColors.HeaderFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(32, 20), Size = new Size(400, 40), BackColor = Color.Transparent });
+            Controls.Add(new Label { Text = "BẢNG ĐIỀU KHIỂN", Font = ThemeColors.HeaderFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(32, 20), Size = new Size(400, 40), BackColor = Color.Transparent, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right });
             Controls.Add(new Label { Text = "Tổng quan hệ thống quản lý thư viện", Font = ThemeColors.BodyFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(32, 62), Size = new Size(400, 22), BackColor = Color.Transparent });
 
             int totalUsers = UserStore.Users.Count;
@@ -26,14 +32,16 @@ namespace LibraryManagement.Forms.Panels
             int librarians = UserStore.Users.Count(u => u.Role == UserRole.ThuThu);
             int readers = UserStore.Users.Count(u => u.Role == UserRole.DocGia);
 
-            var card1 = new StatCard { Title = "Tổng tài khoản", Value = totalUsers.ToString(), IconText = "\uE716", AccentColor = ColorTranslator.FromHtml("#8B5CF6"), Location = new Point(32, 100), Size = new Size(220, 110) };
-            var card2 = new StatCard { Title = "Quản trị viên", Value = admins.ToString(), IconText = "\uE83D", AccentColor = ThemeColors.Danger, Location = new Point(268, 100), Size = new Size(220, 110) };
-            var card3 = new StatCard { Title = "Thủ thư", Value = librarians.ToString(), IconText = "\uE736", AccentColor = ThemeColors.Primary, Location = new Point(504, 100), Size = new Size(220, 110) };
-            var card4 = new StatCard { Title = "Độc giả", Value = readers.ToString(), IconText = "\uE736", AccentColor = ThemeColors.Success, Location = new Point(740, 100), Size = new Size(220, 110) };
-            Controls.Add(card1); Controls.Add(card2); Controls.Add(card3); Controls.Add(card4);
+            cards = new StatCard[] {
+                new StatCard { Title = "Tổng tài khoản", Value = totalUsers.ToString(), IconText = "\uE716", AccentColor = ColorTranslator.FromHtml("#8B5CF6"), Size = new Size(220, 110) },
+                new StatCard { Title = "Quản trị viên", Value = admins.ToString(), IconText = "\uE83D", AccentColor = ThemeColors.Danger, Size = new Size(220, 110) },
+                new StatCard { Title = "Thủ thư", Value = librarians.ToString(), IconText = "\uE736", AccentColor = ThemeColors.Primary, Size = new Size(220, 110) },
+                new StatCard { Title = "Độc giả", Value = readers.ToString(), IconText = "\uE736", AccentColor = ThemeColors.Success, Size = new Size(220, 110) }
+            };
+            foreach (var c in cards) Controls.Add(c);
 
             // Role distribution chart
-            Panel chartCard = new Panel { Location = new Point(32, 230), Size = new Size(460, 300), BackColor = Color.Transparent };
+            chartCard = new Panel { BackColor = Color.Transparent };
             chartCard.Paint += (s, e) =>
             {
                 var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -43,8 +51,7 @@ namespace LibraryManagement.Forms.Panels
                 g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
                 using (var b = new SolidBrush(ThemeColors.TextPrimary)) g.DrawString("Phân quyền hiện tại", ThemeColors.SubTitleFont, b, 20, 16);
 
-                // Donut chart
-                int cx = 160, cy = 170, r = 80;
+                int cx = Math.Min(160, chartCard.Width / 3), cy = 170, r = 80;
                 float total = totalUsers;
                 float startAngle = -90;
                 Color[] colors = { ThemeColors.Danger, ThemeColors.Primary, ThemeColors.Success };
@@ -63,18 +70,18 @@ namespace LibraryManagement.Forms.Panels
                 using (var b = new SolidBrush(ThemeColors.TextPrimary))
                     g.DrawString(totalUsers.ToString(), new Font("Segoe UI", 20, FontStyle.Bold), b, cx - 20, cy - 18);
 
-                // Legend
+                int legendX = Math.Max(cx + r + 40, chartCard.Width - 140);
                 for (int i = 0; i < labels.Length; i++)
                 {
                     int ly = 60 + i * 30;
-                    using (var lb = new SolidBrush(colors[i])) g.FillRectangle(lb, 320, ly, 14, 14);
-                    using (var tb = new SolidBrush(ThemeColors.TextPrimary)) g.DrawString($"{labels[i]}: {values[i]}", ThemeColors.BodyFont, tb, 342, ly - 2);
+                    using (var lb = new SolidBrush(colors[i])) g.FillRectangle(lb, legendX, ly, 14, 14);
+                    using (var tb = new SolidBrush(ThemeColors.TextPrimary)) g.DrawString($"{labels[i]}: {values[i]}", ThemeColors.BodyFont, tb, legendX + 20, ly - 2);
                 }
             };
             Controls.Add(chartCard);
 
             // Recent activity
-            Panel actCard = new Panel { Location = new Point(510, 230), Size = new Size(460, 300), BackColor = Color.Transparent };
+            actCard = new Panel { BackColor = Color.Transparent };
             actCard.Paint += (s, e) =>
             {
                 var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -93,6 +100,27 @@ namespace LibraryManagement.Forms.Panels
                 ay += 44;
             }
             Controls.Add(actCard);
+        }
+
+        private void LayoutCards()
+        {
+            int margin = 32;
+            int gap = 16;
+            int availW = ClientSize.Width - margin * 2;
+            int cardW = (availW - gap * (cards.Length - 1)) / cards.Length;
+            for (int i = 0; i < cards.Length; i++)
+            {
+                cards[i].Location = new Point(margin + i * (cardW + gap), 100);
+                cards[i].Size = new Size(cardW, 110);
+            }
+            int halfW = (availW - gap) / 2;
+            int bottomH = ClientSize.Height - 230 - margin;
+            if (bottomH < 200) bottomH = 200;
+            chartCard.Location = new Point(margin, 230);
+            chartCard.Size = new Size(halfW, bottomH);
+            actCard.Location = new Point(margin + halfW + gap, 230);
+            actCard.Size = new Size(halfW, bottomH);
+            chartCard.Invalidate();
         }
     }
 }

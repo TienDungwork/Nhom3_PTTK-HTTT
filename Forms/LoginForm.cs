@@ -199,17 +199,21 @@ namespace LibraryManagement.Forms
                 _ => new LibrarianForm()
             };
 
-            Hide();
-            mainForm.ShowDialog(this);  // this = owner, khi đóng form chính sẽ trả điều khiển về form đăng nhập
+            // Khi form chính đóng (đăng xuất hoặc đóng cửa sổ) → luôn trả về trang đăng nhập
+            mainForm.FormClosed += (s, _) =>
+            {
+                UserStore.CurrentUser = null;
+                txtPassword.Text = "";
+                txtUsername.Text = "";
+                lblError.Visible = false;
+                WindowState = FormWindowState.Normal;
+                Show();
+                BringToFront();
+                Activate();
+            };
 
-            // After main form closes (logout), show login again
-            txtPassword.Text = "";
-            txtUsername.Text = "";
-            lblError.Visible = false;
-            UserStore.CurrentUser = null;
-            Show();
-            BringToFront();
-            Activate();
+            Hide();
+            mainForm.ShowDialog(this);
         }
 
         private void ShowError(string message)
