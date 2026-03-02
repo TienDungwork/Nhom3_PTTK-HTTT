@@ -12,6 +12,7 @@ namespace LibraryManagement.Controls
         private bool _isActive = false;
 
         public string IconText { get; set; } = "●";
+        public Color ActiveColor { get; set; } = Color.White;
         public bool IsActive
         {
             get => _isActive;
@@ -55,7 +56,7 @@ namespace LibraryManagement.Controls
             // Active indicator
             if (_isActive)
             {
-                using (SolidBrush indicator = new SolidBrush(Color.White))
+                using (SolidBrush indicator = new SolidBrush(ActiveColor))
                 {
                     g.FillRectangle(indicator, 0, Height / 2 - 12, 3, 24);
                 }
