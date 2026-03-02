@@ -25,6 +25,19 @@ namespace LibraryManagement.Forms
             // --- Sidebar ---
             var sidebar = new Panel { Width = ThemeColors.SidebarWidth, Dock = DockStyle.Left, BackColor = ThemeColors.SidebarBackground };
 
+            // Logout (Dock=Bottom, add first)
+            var btnLogout = new SidebarButton { IconText = "\uE72B", Text = "Đăng xuất", Dock = DockStyle.Bottom, Size = new Size(ThemeColors.SidebarWidth, 50) };
+            btnLogout.Click += (s, e) =>
+            {
+                if (MessageBox.Show("Bạn có chắc chắn muốn đăng xuất?", "Đăng xuất", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    UserStore.CurrentUser = null;
+                    Close();
+                }
+            };
+            sidebar.Controls.Add(btnLogout);
+
+            // Logo (Dock=Top)
             var logoPanel = new Panel { Height = 80, Dock = DockStyle.Top, BackColor = Color.FromArgb(20, 255, 255, 255) };
             logoPanel.Paint += (s, e) =>
             {
@@ -36,6 +49,7 @@ namespace LibraryManagement.Forms
             };
             sidebar.Controls.Add(logoPanel);
 
+            // User info (Dock=Top)
             var cu = UserStore.CurrentUser;
             var userPanel = new Panel { Height = 50, Dock = DockStyle.Top, BackColor = Color.Transparent };
             userPanel.Paint += (s, e) =>
@@ -45,6 +59,9 @@ namespace LibraryManagement.Forms
                 using (var b = new SolidBrush(Color.FromArgb(150, 255, 255, 255))) g.DrawString(cu?.RoleDisplay ?? "", ThemeColors.SmallFont, b, 20, 28);
             };
             sidebar.Controls.Add(userPanel);
+
+            // Menu container (Dock=Fill)
+            var menuPanel = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent, AutoScroll = true };
 
             string[][] menuItems = {
                 new[] { "\uE80F", "Trang chủ" },
@@ -63,15 +80,12 @@ namespace LibraryManagement.Forms
                 int idx = i;
                 btn.Click += (s, e) => NavigateTo(idx);
                 menuButtons[i] = btn;
-                sidebar.Controls.Add(btn);
+                menuPanel.Controls.Add(btn);
                 y += 50;
             }
+            sidebar.Controls.Add(menuPanel);
 
-            var btnLogout = new SidebarButton { IconText = "\uE72B", Text = "Đăng xuất", Dock = DockStyle.Bottom, Size = new Size(ThemeColors.SidebarWidth, 50) };
-            btnLogout.Click += (s, e) => { if (MessageBox.Show("Bạn có chắc chắn muốn đăng xuất?", "Đăng xuất", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes) { UserStore.CurrentUser = null; Close(); } };
-            sidebar.Controls.Add(btnLogout);
-            Controls.Add(sidebar);
-
+            // --- Header ---
             var header = new Panel { Height = ThemeColors.HeaderHeight, Dock = DockStyle.Top, BackColor = ThemeColors.HeaderBackground };
             header.Paint += (s, e) =>
             {
@@ -79,10 +93,14 @@ namespace LibraryManagement.Forms
                 using (var b = new SolidBrush(ThemeColors.TextPrimary)) g.DrawString("QUẢN LÝ THƯ VIỆN — THỦ THƯ", new Font("Segoe UI Semibold", 13), b, 24, 18);
                 using (var pen = new Pen(ThemeColors.Border)) g.DrawLine(pen, 0, header.Height - 1, header.Width, header.Height - 1);
             };
-            Controls.Add(header);
 
+            // --- Content ---
             contentPanel = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.Background };
+
+            // WinForms dock order: last added = docked first
             Controls.Add(contentPanel);
+            Controls.Add(header);
+            Controls.Add(sidebar);
 
             NavigateTo(0);
         }

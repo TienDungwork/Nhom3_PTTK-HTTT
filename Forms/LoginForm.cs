@@ -200,13 +200,14 @@ namespace LibraryManagement.Forms
             };
 
             Hide();
-            mainForm.FormClosed += (s, args) =>
-            {
-                txtPassword.Text = "";
-                lblError.Visible = false;
-                Show();
-            };
-            mainForm.Show();
+            mainForm.ShowDialog();
+
+            // After main form closes (logout), show login again
+            txtPassword.Text = "";
+            txtUsername.Text = "";
+            lblError.Visible = false;
+            UserStore.CurrentUser = null;
+            Show();
         }
 
         private void ShowError(string message)
