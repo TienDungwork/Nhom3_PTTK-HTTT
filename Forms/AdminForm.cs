@@ -25,19 +25,6 @@ namespace LibraryManagement.Forms
             // --- Sidebar ---
             var sidebar = new Panel { Width = ThemeColors.SidebarWidth, Dock = DockStyle.Left, BackColor = ThemeColors.SidebarBackground };
 
-            // Logout button (Dock=Bottom, add first so it stays at bottom)
-            var btnLogout = new SidebarButton { IconText = "\uE72B", Text = "Đăng xuất", Dock = DockStyle.Bottom, Size = new Size(ThemeColors.SidebarWidth, 50) };
-            btnLogout.Click += (s, e) =>
-            {
-                if (MessageBox.Show("Bạn có chắc chắn muốn đăng xuất?", "Đăng xuất", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-                {
-                    UserStore.CurrentUser = null;
-                    Close();
-                }
-            };
-            sidebar.Controls.Add(btnLogout);
-
-            // Logo panel (Dock=Top)
             var logoPanel = new Panel { Height = 80, Dock = DockStyle.Top, BackColor = Color.FromArgb(20, 255, 255, 255) };
             logoPanel.Paint += (s, e) =>
             {
@@ -47,9 +34,7 @@ namespace LibraryManagement.Forms
                 using (var b = new SolidBrush(Color.FromArgb(150, 255, 255, 255))) g.DrawString("Bảng điều khiển", ThemeColors.SmallFont, b, 70, 44);
                 using (var pen = new Pen(Color.FromArgb(40, 255, 255, 255))) g.DrawLine(pen, 20, 79, ThemeColors.SidebarWidth - 20, 79);
             };
-            sidebar.Controls.Add(logoPanel);
 
-            // User info (Dock=Top)
             var cu = UserStore.CurrentUser;
             var userPanel = new Panel { Height = 50, Dock = DockStyle.Top, BackColor = Color.Transparent };
             userPanel.Paint += (s, e) =>
@@ -58,9 +43,7 @@ namespace LibraryManagement.Forms
                 using (var b = new SolidBrush(Color.White)) g.DrawString(cu?.HoTen ?? "Admin", new Font("Segoe UI Semibold", 10), b, 20, 8);
                 using (var b = new SolidBrush(Color.FromArgb(150, 255, 255, 255))) g.DrawString(cu?.RoleDisplay ?? "", ThemeColors.SmallFont, b, 20, 28);
             };
-            sidebar.Controls.Add(userPanel);
 
-            // Menu buttons container (Dock=Fill, takes remaining space between top panels and logout)
             var menuPanel = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent, AutoScroll = true };
 
             string[][] menuItems = {
@@ -83,7 +66,22 @@ namespace LibraryManagement.Forms
                 menuPanel.Controls.Add(btn);
                 y += 50;
             }
-            sidebar.Controls.Add(menuPanel);
+
+            var btnLogout = new SidebarButton { IconText = "\uE72B", Text = "Đăng xuất", Dock = DockStyle.Bottom, Size = new Size(ThemeColors.SidebarWidth, 50) };
+            btnLogout.Click += (s, e) =>
+            {
+                if (MessageBox.Show("Bạn có chắc chắn muốn đăng xuất?", "Đăng xuất", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    UserStore.CurrentUser = null;
+                    Close();
+                }
+            };
+
+            // SIDEBAR INTERNAL DOCK ORDER: Fill first (docked last), then Top, then Bottom last (docked first)
+            sidebar.Controls.Add(menuPanel);    // Fill → docked LAST (fills remaining)
+            sidebar.Controls.Add(userPanel);    // Top  → docked 3rd (below logo)
+            sidebar.Controls.Add(logoPanel);    // Top  → docked 2nd (very top)
+            sidebar.Controls.Add(btnLogout);    // Bottom → docked 1st (fixed at bottom)
 
             // --- Header ---
             var header = new Panel { Height = ThemeColors.HeaderHeight, Dock = DockStyle.Top, BackColor = ThemeColors.HeaderBackground };
@@ -97,8 +95,7 @@ namespace LibraryManagement.Forms
             // --- Content ---
             contentPanel = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.Background };
 
-            // IMPORTANT: Add order matters for WinForms docking!
-            // Fill first, then Top, then Left — last added gets docked first
+            // FORM DOCK ORDER: Fill first (docked last), then Top, then Left last (docked first)
             Controls.Add(contentPanel);
             Controls.Add(header);
             Controls.Add(sidebar);
