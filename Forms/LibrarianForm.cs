@@ -38,7 +38,7 @@ namespace LibraryManagement.Forms
             {
                 var g = e.Graphics;
                 g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-                using (var b = new SolidBrush(Color.White)) g.DrawString("📚", new Font("Segoe UI", 24), b, 20, 18);
+                using (var b = new SolidBrush(Color.White)) g.DrawString("📚", new Font("Segoe UI Emoji", 24), b, 20, 18);
                 using (var b = new SolidBrush(Color.White)) g.DrawString("THƯ VIỆN", new Font("Segoe UI", 16, FontStyle.Bold), b, 68, 14);
                 using (var b = new SolidBrush(Color.FromArgb(150, 255, 255, 255))) g.DrawString("Giao diện Thủ thư", ThemeColors.SmallFont, b, 70, 44);
                 using (var pen = new Pen(Color.FromArgb(40, 255, 255, 255))) g.DrawLine(pen, 20, 79, ThemeColors.SidebarWidth - 20, 79);
