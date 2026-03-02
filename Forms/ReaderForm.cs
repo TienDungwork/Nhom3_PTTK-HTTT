@@ -36,7 +36,7 @@ namespace LibraryManagement.Forms
             };
 
             var cu = UserStore.CurrentUser;
-            var userPanel = new Panel { Height = 50, Dock = DockStyle.Top, BackColor = Color.Transparent };
+            var userPanel = new Panel { Height = 50, Dock = DockStyle.Top, BackColor = ThemeColors.SidebarBackground };
             userPanel.Paint += (s, e) =>
             {
                 var g = e.Graphics; g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
@@ -44,7 +44,7 @@ namespace LibraryManagement.Forms
                 using (var b = new SolidBrush(Color.FromArgb(150, 255, 255, 255))) g.DrawString(cu?.RoleDisplay ?? "", ThemeColors.SmallFont, b, 20, 28);
             };
 
-            var menuPanel = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent, AutoScroll = true };
+            var menuPanel = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.SidebarBackground, AutoScroll = true };
 
             string[][] menuItems = {
                 new[] { "\uE80F", "Trang chủ" },

@@ -200,7 +200,7 @@ namespace LibraryManagement.Forms
             };
 
             Hide();
-            mainForm.ShowDialog();
+            mainForm.ShowDialog(this);  // this = owner, khi đóng form chính sẽ trả điều khiển về form đăng nhập
 
             // After main form closes (logout), show login again
             txtPassword.Text = "";
@@ -208,6 +208,8 @@ namespace LibraryManagement.Forms
             lblError.Visible = false;
             UserStore.CurrentUser = null;
             Show();
+            BringToFront();
+            Activate();
         }
 
         private void ShowError(string message)
