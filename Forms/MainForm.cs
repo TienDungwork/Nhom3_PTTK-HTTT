@@ -5,6 +5,7 @@ using System.Windows.Forms;
 using LibraryManagement.Controls;
 using LibraryManagement.Helpers;
 using LibraryManagement.Forms.Panels;
+using LibraryManagement.Models;
 
 namespace LibraryManagement.Forms
 {
@@ -13,13 +14,12 @@ namespace LibraryManagement.Forms
         private Panel sidebarPanel = null!;
         private Panel headerPanel = null!;
         private Panel contentPanel = null!;
-        private SidebarButton? activeButton;
         private SidebarButton[] menuButtons = null!;
 
         public MainForm()
         {
             InitializeComponent();
-            NavigateTo(0); // Dashboard by default
+            NavigateTo(0);
         }
 
         private void InitializeComponent()
@@ -30,9 +30,6 @@ namespace LibraryManagement.Forms
             MinimumSize = new Size(1200, 700);
             BackColor = ThemeColors.Background;
             DoubleBuffered = true;
-
-            // Remove default title bar for cleaner look
-            // FormBorderStyle = FormBorderStyle.None; // Uncomment for borderless
 
             CreateSidebar();
             CreateHeader();
@@ -49,12 +46,7 @@ namespace LibraryManagement.Forms
             };
 
             // Logo area
-            Panel logoPanel = new Panel
-            {
-                Dock = DockStyle.Top,
-                Height = 80,
-                BackColor = Color.Transparent
-            };
+            Panel logoPanel = new Panel { Dock = DockStyle.Top, Height = 80, BackColor = Color.Transparent };
             logoPanel.Paint += (s, e) =>
             {
                 var g = e.Graphics;
@@ -70,6 +62,22 @@ namespace LibraryManagement.Forms
             };
             sidebarPanel.Controls.Add(logoPanel);
 
+            // User info panel at top of sidebar
+            var cu = UserStore.CurrentUser;
+            Panel userPanel = new Panel { Dock = DockStyle.Top, Height = 64, BackColor = Color.FromArgb(30, 255, 255, 255) };
+            userPanel.Paint += (s, e) =>
+            {
+                var g = e.Graphics;
+                g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+                string name = cu?.HoTen ?? "Admin";
+                string role = cu?.RoleDisplay ?? "Quản trị viên";
+                using (var b = new SolidBrush(Color.White))
+                    g.DrawString(name, ThemeColors.SubTitleFont, b, 16, 10);
+                using (var b = new SolidBrush(Color.FromArgb(180, 255, 255, 255)))
+                    g.DrawString(role, ThemeColors.SmallFont, b, 16, 36);
+            };
+            sidebarPanel.Controls.Add(userPanel);
+
             // Menu items
             string[][] menuItems = {
                 new[] { "🏠", "Trang chủ" },
@@ -81,7 +89,7 @@ namespace LibraryManagement.Forms
             };
 
             menuButtons = new SidebarButton[menuItems.Length];
-            int y = 90;
+            int y = 160;
 
             for (int i = 0; i < menuItems.Length; i++)
             {
@@ -112,11 +120,11 @@ namespace LibraryManagement.Forms
                 if (MessageBox.Show("Bạn có chắc chắn muốn đăng xuất?", "Đăng xuất",
                     MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
+                    UserStore.CurrentUser = null;
                     Close();
                 }
             };
             sidebarPanel.Controls.Add(btnLogout);
-
             Controls.Add(sidebarPanel);
         }
 
@@ -137,14 +145,7 @@ namespace LibraryManagement.Forms
                     g.DrawString("HỆ THỐNG QUẢN LÝ THƯ VIỆN", new Font("Segoe UI Semibold", 13), b, 24, 18);
                 using (var pen = new Pen(ThemeColors.Border))
                     g.DrawLine(pen, 0, headerPanel.Height - 1, headerPanel.Width, headerPanel.Height - 1);
-
-                // User info on right
-                string userInfo = "👤 Admin";
-                var userSize = g.MeasureString(userInfo, ThemeColors.BodyFont);
-                using (var b = new SolidBrush(ThemeColors.TextSecondary))
-                    g.DrawString(userInfo, ThemeColors.BodyFont, b, headerPanel.Width - userSize.Width - 24, 20);
             };
-
             Controls.Add(headerPanel);
         }
 
@@ -154,7 +155,6 @@ namespace LibraryManagement.Forms
             {
                 Dock = DockStyle.Fill,
                 BackColor = ThemeColors.Background,
-                Padding = new Padding(0)
             };
             Controls.Add(contentPanel);
             contentPanel.BringToFront();
@@ -162,12 +162,10 @@ namespace LibraryManagement.Forms
 
         private void NavigateTo(int index)
         {
-            // Update active button
             foreach (var btn in menuButtons)
                 btn.IsActive = false;
             menuButtons[index].IsActive = true;
 
-            // Swap content
             contentPanel.Controls.Clear();
 
             UserControl panel = index switch

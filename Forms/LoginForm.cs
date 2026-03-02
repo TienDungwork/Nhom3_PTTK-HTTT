@@ -248,9 +248,10 @@ namespace LibraryManagement.Forms
                 return;
             }
 
-            // Simple check for demo
-            if (username == "admin" && password == "admin")
+            var user = Models.UserStore.Login(username, password);
+            if (user != null)
             {
+                Models.UserStore.CurrentUser = user;
                 Hide();
                 MainForm mainForm = new MainForm();
                 mainForm.FormClosed += (s, args) => Close();
