@@ -15,25 +15,65 @@ namespace LibraryManagement.Forms.Panels
         private DateTimePicker dtpNgayMuon = null!;
         private TextBox txtSoNgay = null!;
         private Label lblNgayTra = null!;
-        private Label lblSoLuong = null!;
 
         public BorrowReturnPanel()
         {
             Dock = DockStyle.Fill;
             BackColor = ThemeColors.Background;
-            AutoScroll = true;
 
-            // Title
-            Controls.Add(new Label { Text = "MƯỢN / TRẢ SÁCH", Font = ThemeColors.HeaderFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(32, 20), Size = new Size(400, 40), BackColor = Color.Transparent });
-            Controls.Add(new Label { Text = "Chọn sách và thực hiện mượn hoặc trả", Font = ThemeColors.BodyFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(32, 60), Size = new Size(500, 22), BackColor = Color.Transparent });
+            // === TOP: Title ===
+            var topPanel = new Panel { Dock = DockStyle.Top, Height = 80, BackColor = ThemeColors.Background };
+            topPanel.Controls.Add(new Label { Text = "MƯỢN / TRẢ SÁCH", Font = ThemeColors.HeaderFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(32, 16), Size = new Size(400, 36), BackColor = Color.Transparent });
+            topPanel.Controls.Add(new Label { Text = "Chọn sách trong bảng rồi nhấn Mượn hoặc Trả", Font = ThemeColors.BodyFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(32, 50), Size = new Size(500, 22), BackColor = Color.Transparent });
 
-            // --- Search button ---
-            var btnTimKiem = new RoundedButton { Text = "Tìm kiếm sách", Size = new Size(160, 42), Location = new Point(32, 96), ButtonColor = ThemeColors.Primary, Font = ThemeColors.ButtonFont };
+            // === BOTTOM: Action bar with loan info + buttons ===
+            var bottomBar = new Panel { Dock = DockStyle.Bottom, Height = 140, BackColor = Color.White, Padding = new Padding(20, 12, 20, 12) };
+            bottomBar.Paint += (s, e) =>
+            {
+                using var pen = new Pen(ThemeColors.Border);
+                e.Graphics.DrawLine(pen, 0, 0, bottomBar.Width, 0);
+            };
+
+            // Row 1: Loan params
+            bottomBar.Controls.Add(new Label { Text = "Ngày mượn", Font = ThemeColors.SmallFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(20, 8), Size = new Size(120, 18), BackColor = Color.Transparent });
+            dtpNgayMuon = new DateTimePicker { Location = new Point(20, 28), Size = new Size(170, 32), Font = ThemeColors.BodyFont, Format = DateTimePickerFormat.Short };
+            dtpNgayMuon.ValueChanged += UpdateNgayTra;
+            bottomBar.Controls.Add(dtpNgayMuon);
+
+            bottomBar.Controls.Add(new Label { Text = "Số ngày mượn", Font = ThemeColors.SmallFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(210, 8), Size = new Size(120, 18), BackColor = Color.Transparent });
+            txtSoNgay = new TextBox { Text = "14", Location = new Point(210, 28), Size = new Size(80, 32), Font = ThemeColors.BodyFont, BorderStyle = BorderStyle.FixedSingle, TextAlign = HorizontalAlignment.Center };
+            txtSoNgay.TextChanged += UpdateNgayTra;
+            bottomBar.Controls.Add(txtSoNgay);
+
+            bottomBar.Controls.Add(new Label { Text = "Ngày trả (dự kiến)", Font = ThemeColors.SmallFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(310, 8), Size = new Size(150, 18), BackColor = Color.Transparent });
+            lblNgayTra = new Label
+            {
+                Text = DateTime.Now.AddDays(14).ToString("dd/MM/yyyy"),
+                Font = ThemeColors.SubTitleFont,
+                ForeColor = ThemeColors.Primary,
+                Location = new Point(310, 28),
+                Size = new Size(150, 30),
+                BackColor = ThemeColors.InfoLight,
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+            bottomBar.Controls.Add(lblNgayTra);
+
+            // Row 2: Action buttons (prominent)
+            var btnMuon = new RoundedButton { Text = "📗  Mượn sách", Size = new Size(180, 48), Location = new Point(20, 76), ButtonColor = ThemeColors.Success, Font = new Font("Segoe UI Semibold", 12) };
+            btnMuon.Click += BtnMuon_Click;
+            bottomBar.Controls.Add(btnMuon);
+
+            var btnTra = new RoundedButton { Text = "📕  Trả sách", Size = new Size(180, 48), Location = new Point(216, 76), ButtonColor = ThemeColors.Warning, Font = new Font("Segoe UI Semibold", 12) };
+            btnTra.Click += BtnTra_Click;
+            bottomBar.Controls.Add(btnTra);
+
+            var btnTimKiem = new RoundedButton { Text = "🔍  Tìm kiếm", Size = new Size(160, 48), Location = new Point(412, 76), ButtonColor = ThemeColors.Primary, Font = new Font("Segoe UI Semibold", 12) };
             btnTimKiem.Click += BtnTimKiem_Click;
-            Controls.Add(btnTimKiem);
+            bottomBar.Controls.Add(btnTimKiem);
 
-            // --- Book list DGV ---
-            dgvBooks = new DataGridView { Location = new Point(32, 150), Size = new Size(900, 260), Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
+            // === CENTER: Book list DGV (fills remaining space) ===
+            var dgvPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(32, 8, 32, 8), BackColor = ThemeColors.Background };
+            dgvBooks = new DataGridView { Dock = DockStyle.Fill };
             dgvBooks.Columns.Add("MaSach", "Mã sách");
             dgvBooks.Columns.Add("TenSach", "Nhan đề");
             dgvBooks.Columns.Add("TacGia", "Tác giả");
@@ -43,60 +83,12 @@ namespace LibraryManagement.Forms.Panels
             ModernDataGridView.ApplyStyle(dgvBooks);
             dgvBooks.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             LoadBooks();
-            Controls.Add(dgvBooks);
+            dgvPanel.Controls.Add(dgvBooks);
 
-            // --- Bottom panel: borrow form ---
-            var bottomCard = new Panel { Location = new Point(32, 424), Size = new Size(900, 200), BackColor = Color.White, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
-            bottomCard.Paint += (s, e) =>
-            {
-                using var path = ThemeColors.GetRoundedRect(new Rectangle(0, 0, bottomCard.Width - 2, bottomCard.Height - 2), 12);
-                using var bg = new SolidBrush(Color.White);
-                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                e.Graphics.FillPath(bg, path);
-            };
-
-            // Left side: loan info
-            lblSoLuong = new Label { Text = "Sách đã chọn: 0", Font = ThemeColors.SubTitleFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(20, 16), Size = new Size(260, 28), BackColor = Color.Transparent };
-            bottomCard.Controls.Add(lblSoLuong);
-
-            bottomCard.Controls.Add(new Label { Text = "Ngày mượn", Font = ThemeColors.SmallFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(20, 56), Size = new Size(120, 18), BackColor = Color.Transparent });
-            dtpNgayMuon = new DateTimePicker { Location = new Point(20, 76), Size = new Size(180, 32), Font = ThemeColors.BodyFont, Format = DateTimePickerFormat.Short };
-            dtpNgayMuon.ValueChanged += UpdateNgayTra;
-            bottomCard.Controls.Add(dtpNgayMuon);
-
-            bottomCard.Controls.Add(new Label { Text = "Số ngày mượn", Font = ThemeColors.SmallFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(220, 56), Size = new Size(120, 18), BackColor = Color.Transparent });
-            txtSoNgay = new TextBox { Text = "14", Location = new Point(220, 76), Size = new Size(100, 32), Font = ThemeColors.BodyFont, BorderStyle = BorderStyle.FixedSingle, TextAlign = HorizontalAlignment.Center };
-            txtSoNgay.TextChanged += UpdateNgayTra;
-            bottomCard.Controls.Add(txtSoNgay);
-
-            bottomCard.Controls.Add(new Label { Text = "Ngày trả (dự kiến)", Font = ThemeColors.SmallFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(340, 56), Size = new Size(160, 18), BackColor = Color.Transparent });
-            lblNgayTra = new Label
-            {
-                Text = DateTime.Now.AddDays(14).ToString("dd/MM/yyyy"),
-                Font = ThemeColors.SubTitleFont,
-                ForeColor = ThemeColors.Primary,
-                Location = new Point(340, 76),
-                Size = new Size(180, 32),
-                BackColor = ThemeColors.InfoLight,
-                TextAlign = ContentAlignment.MiddleCenter
-            };
-            bottomCard.Controls.Add(lblNgayTra);
-
-            // Right side buttons
-            var btnMuon = new RoundedButton { Text = "Mượn sách", Size = new Size(150, 44), Location = new Point(600, 56), ButtonColor = ThemeColors.Success, Font = ThemeColors.ButtonFont, Anchor = AnchorStyles.Top | AnchorStyles.Right };
-            btnMuon.Click += BtnMuon_Click;
-            bottomCard.Controls.Add(btnMuon);
-
-            var btnTra = new RoundedButton { Text = "Trả sách", Size = new Size(150, 44), Location = new Point(600, 112), ButtonColor = ThemeColors.Warning, Font = ThemeColors.ButtonFont, Anchor = AnchorStyles.Top | AnchorStyles.Right };
-            btnTra.Click += BtnTra_Click;
-            bottomCard.Controls.Add(btnTra);
-
-            Controls.Add(bottomCard);
-
-            dgvBooks.SelectionChanged += (s, e) =>
-            {
-                lblSoLuong.Text = $"Sách đã chọn: {dgvBooks.SelectedRows.Count}";
-            };
+            // ADD ORDER: Fill panel first → docked last; Top/Bottom added last → docked first
+            Controls.Add(dgvPanel);
+            Controls.Add(bottomBar);
+            Controls.Add(topPanel);
         }
 
         private void LoadBooks()
@@ -118,7 +110,6 @@ namespace LibraryManagement.Forms.Panels
 
         private void BtnTimKiem_Click(object? sender, EventArgs e)
         {
-            // Open search as modal
             using var searchForm = new Form
             {
                 Text = "Tìm kiếm sách",
