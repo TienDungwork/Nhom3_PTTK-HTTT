@@ -199,8 +199,9 @@ namespace LibraryManagement.Forms
                 _ => new LibrarianForm()
             };
 
-            // Khi form chính đóng (đăng xuất hoặc đóng cửa sổ) → luôn trả về trang đăng nhập
-            mainForm.FormClosed += (s, _) =>
+            // Hiện lại form đăng nhập TRƯỚC KHI form chính đóng (FormClosing), để app không bị tắt
+            // (nếu chỉ Show() trong FormClosed thì lúc form đóng có thể không còn form nào hiển thị → app thoát)
+            mainForm.FormClosing += (s, _) =>
             {
                 UserStore.CurrentUser = null;
                 txtPassword.Text = "";
