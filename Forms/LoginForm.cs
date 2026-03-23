@@ -199,36 +199,33 @@ namespace LibraryManagement.Forms
                 _ => new LibrarianForm()
             };
 
-            // FormClosing: hiện form đăng nhập trước khi dialog đóng → app không tắt
-            mainForm.FormClosing += (s, _) =>
-            {
-                Show();
-                BringToFront();
-                Activate();
-            };
-            // FormClosed: reset và xóa phiên sau khi dialog đã đóng hẳn (tránh sập khi đăng nhập tài khoản mới)
-            mainForm.FormClosed += (s, _) =>
-            {
-                if (IsDisposed || !IsHandleCreated) return;
-                BeginInvoke(new Action(() =>
-                {
-                    if (IsDisposed || !IsHandleCreated) return;
-                    UserStore.CurrentUser = null;
-                    txtPassword.Text = "";
-                    txtUsername.Text = "";
-                    lblError.Visible = false;
-                    WindowState = FormWindowState.Normal;
-                }));
-            };
-
             Hide();
-            mainForm.ShowDialog(this);
+            using (mainForm)
+            {
+                mainForm.ShowDialog(this);
+            }
+
+            if (IsDisposed) return;
+
+            ResetLoginState();
+            Show();
+            BringToFront();
+            Activate();
         }
 
         private void ShowError(string message)
         {
             lblError.Text = message;
             lblError.Visible = true;
+        }
+
+        private void ResetLoginState()
+        {
+            UserStore.CurrentUser = null;
+            txtPassword.Text = "";
+            txtUsername.Text = "";
+            lblError.Visible = false;
+            WindowState = FormWindowState.Normal;
         }
     }
 }
