@@ -1,0 +1,130 @@
+@startuml
+skinparam classAttributeIconSize 0
+hide circle
+
+'======================
+' NGUOI DUNG
+'======================
+
+class ThuThu {
+  maThuThu: String
+  hoTen: String
+  email: String
+  soDienThoai: String
+  tenDangNhap: String
+  matKhau: String
+}
+
+class DocGia {
+  maDocGia: String
+  hoTen: String
+  email: String
+  soDienThoai: String
+  tenDangNhap: String
+  matKhau: String
+}
+
+class QuanTriVien {
+  maQuanTri: String
+  hoTen: String
+  email: String
+  soDienThoai: String
+  tenDangNhap: String
+  matKhau: String
+}
+
+'======================
+' QUAN LY SACH
+'======================
+
+class DanhMucSach {
+  maDanhMuc: String
+  tenDanhMuc: String
+  moTa: String
+}
+
+class DauSach {
+  maDauSach: String
+  tenSach: String
+  tacGia: String
+  nhaXuatBan: String
+  namXuatBan: int
+}
+
+class QuyenSach {
+  maQuyenSach: String
+  ngayNhap: Date
+  tinhTrang: String
+  trangThai: String
+  viTri: String
+}
+
+'======================
+' MUON / TRA
+'======================
+
+class PhieuDatMuon {
+  maPhieuDat: String
+  ngayDat: Date
+  trangThai: String
+}
+
+class PhieuMuon {
+  maPhieuMuon: String
+  ngayMuon: Date
+  hanTra: Date
+  trangThai: String
+}
+
+class PhieuMuonChiTiet {
+  ngayTra: Date
+  trangThai: String
+}
+
+'======================
+' HE THONG
+'======================
+
+class ThongBao {
+  maThongBao: String
+  noiDung: String
+  ngayGui: Date
+  trangThai: String
+}
+
+class NhatKyHeThong {
+  maNhatKy: String
+  hanhDong: String
+  thoiGian: Date
+}
+
+class CauHinhHeThong {
+  soNgayMuonToiDa: int
+  soSachMuonToiDa: int
+  phiPhatMoiNgay: double
+}
+
+'======================
+' QUAN HE
+'======================
+
+DanhMucSach "1" -- "n" DauSach
+DauSach "1" -- "n" QuyenSach
+
+DocGia "1" -- "n" PhieuDatMuon
+DocGia "1" -- "n" PhieuMuon
+
+PhieuDatMuon "1" --> "0..1" PhieuMuon
+
+PhieuMuon "1" -- "n" PhieuMuonChiTiet
+QuyenSach "1" -- "n" PhieuMuonChiTiet
+
+DocGia "1" -- "n" ThongBao
+
+QuanTriVien "1" -- "n" NhatKyHeThong
+QuanTriVien "1" -- "1" CauHinhHeThong
+
+ThuThu "1" -- "n" PhieuMuon
+ThuThu "1" -- "n" PhieuDatMuon
+
+@enduml

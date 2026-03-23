@@ -16,6 +16,7 @@ namespace LibraryManagement.Models
         public DateTime? NgayTraThuc { get; set; }
         public string TrangThai { get; set; } = "Đang mượn";
         public decimal TienPhat { get; set; } = 0;
+        public bool DaThuPhat { get; set; } = false;
 
         public bool IsOverdue =>
             TrangThai == "Đang mượn" && DateTime.Now > NgayHenTra;

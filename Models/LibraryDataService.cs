@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace LibraryManagement.Models
 {
@@ -159,6 +160,13 @@ namespace LibraryManagement.Models
 
             if (string.IsNullOrWhiteSpace(book.MaDanhMuc))
                 return (false, "Vui lòng chọn danh mục sách.");
+
+            if (!IsValidIsbn(book.ISBN))
+                return (false, "ISBN không hợp lệ. Chỉ chấp nhận ISBN-10 hoặc ISBN-13.");
+
+            int currentYear = DateTime.Now.Year;
+            if (book.NamXuatBan < 1450 || book.NamXuatBan > currentYear + 1)
+                return (false, $"Năm xuất bản phải trong khoảng 1450 - {currentYear + 1}.");
 
             SyncBookCategory(book);
 
@@ -360,7 +368,8 @@ namespace LibraryManagement.Models
                 MaLo = lot.MaLo,
                 NgayMuon = ngayMuon,
                 NgayHenTra = ngayMuon.AddDays(soNgayMuon),
-                TrangThai = "Đang mượn"
+                TrangThai = "Đang mượn",
+                DaThuPhat = false
             });
 
             RecalculateBookInventoryFromLots(maSach);
@@ -376,6 +385,10 @@ namespace LibraryManagement.Models
 
             if (record == null)
                 return (false, "Không tìm thấy phiếu mượn phù hợp.", null);
+
+            decimal tienPhatHienTai = CalculateLateFee(record, ngayTra);
+            if (tienPhatHienTai > 0 && !record.DaThuPhat)
+                return (false, "Phiếu quá hạn chưa được thu phạt, không thể xác nhận trả sách.", null);
 
             CompleteReturn(record, ngayTra);
             return (true, $"Trả sách \"{record.TenSach}\" thành công.", record);
@@ -406,6 +419,25 @@ namespace LibraryManagement.Models
             RecalculateBookInventoryFromLots(record.MaSach);
         }
 
+        public static (bool Success, string Message) CollectFine(string maMuon)
+        {
+            var record = SampleData.BorrowRecords.FirstOrDefault(r => r.MaMuon == maMuon);
+            if (record == null)
+                return (false, "Không tìm thấy phiếu mượn.");
+
+            decimal fine = CalculateLateFee(record);
+            if (fine <= 0)
+            {
+                record.TienPhat = 0;
+                record.DaThuPhat = true;
+                return (true, "Phiếu này không phát sinh tiền phạt.");
+            }
+
+            record.TienPhat = fine;
+            record.DaThuPhat = true;
+            return (true, $"Đã xác nhận thu phạt {fine:N0} VNĐ.");
+        }
+
         public static decimal CalculateLateFee(BorrowRecord record, DateTime? ngayTra = null)
         {
             var compareDate = ngayTra ?? DateTime.Now;
@@ -422,6 +454,29 @@ namespace LibraryManagement.Models
         public static int CountBooksByCategory(string maDanhMuc)
         {
             return SampleData.Books.Count(b => b.MaDanhMuc == maDanhMuc);
+        }
+
+        private static bool IsValidIsbn(string isbn)
+        {
+            if (string.IsNullOrWhiteSpace(isbn))
+                return false;
+
+            string normalized = isbn.Replace("-", "").Replace(" ", "");
+            if (Regex.IsMatch(normalized, "^[0-9]{13}$"))
+                return true;
+
+            if (!Regex.IsMatch(normalized, "^[0-9]{9}[0-9Xx]$"))
+                return false;
+
+            int sum = 0;
+            for (int i = 0; i < 9; i++)
+            {
+                sum += (10 - i) * (normalized[i] - '0');
+            }
+
+            int lastValue = normalized[9] is 'X' or 'x' ? 10 : (normalized[9] - '0');
+            sum += lastValue;
+            return sum % 11 == 0;
         }
 
         private static void EnsureLotsForAllBooks()
