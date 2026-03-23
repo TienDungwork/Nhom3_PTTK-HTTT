@@ -9,6 +9,8 @@ namespace LibraryManagement.Models
         public string TenDocGia { get; set; } = "";
         public string MaSach { get; set; } = "";
         public string TenSach { get; set; } = "";
+        public string MaLo { get; set; } = "";
+        public int SoLuong { get; set; } = 1;
         public DateTime NgayMuon { get; set; } = DateTime.Now;
         public DateTime NgayHenTra { get; set; } = DateTime.Now.AddDays(14);
         public DateTime? NgayTraThuc { get; set; }

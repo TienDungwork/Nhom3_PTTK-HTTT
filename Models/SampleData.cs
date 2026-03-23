@@ -32,6 +32,21 @@ namespace LibraryManagement.Models
             new Book { MaSach = "S010", TenSach = "Triết học Mác-Lênin", TacGia = "Lê Thị K", MaDanhMuc = "DM007", ChuDe = "Triết học", NamXuatBan = 2021, NhaXuatBan = "NXB Chính trị", URI = "https://lib.tlu.edu.vn/s010", ISBN = "978-604-1-00010-2", BoSuuTap = "Chính trị", TheLoai = "Triết học", SoLuong = 5, ViTriKho = "D2-01", NhaCungCap = "Nhà sách Thành Nghĩa" },
         };
 
+        public static List<BookLot> BookLots = new List<BookLot>
+        {
+            new BookLot { MaLo = "LO001", MaSach = "S001", NgayNhap = new DateTime(2024, 1, 10), SoLuongNhap = 2, SoLuongCon = 0, TinhTrang = "Mới", NhaCungCap = "Fahasa" },
+            new BookLot { MaLo = "LO002", MaSach = "S001", NgayNhap = new DateTime(2024, 6, 18), SoLuongNhap = 3, SoLuongCon = 3, TinhTrang = "Mới", NhaCungCap = "Fahasa" },
+            new BookLot { MaLo = "LO003", MaSach = "S002", NgayNhap = new DateTime(2024, 2, 5), SoLuongNhap = 3, SoLuongCon = 2, TinhTrang = "Mới", NhaCungCap = "Fahasa" },
+            new BookLot { MaLo = "LO004", MaSach = "S003", NgayNhap = new DateTime(2024, 3, 2), SoLuongNhap = 2, SoLuongCon = 1, TinhTrang = "Mới", NhaCungCap = "Tiki" },
+            new BookLot { MaLo = "LO005", MaSach = "S004", NgayNhap = new DateTime(2023, 11, 11), SoLuongNhap = 4, SoLuongCon = 4, TinhTrang = "Cũ", NhaCungCap = "Nhà sách Thành Nghĩa" },
+            new BookLot { MaLo = "LO006", MaSach = "S005", NgayNhap = new DateTime(2023, 9, 21), SoLuongNhap = 6, SoLuongCon = 5, TinhTrang = "Cũ", NhaCungCap = "Fahasa" },
+            new BookLot { MaLo = "LO007", MaSach = "S006", NgayNhap = new DateTime(2024, 5, 14), SoLuongNhap = 0, SoLuongCon = 0, TinhTrang = "Mới", NhaCungCap = "Tiki" },
+            new BookLot { MaLo = "LO008", MaSach = "S007", NgayNhap = new DateTime(2024, 4, 8), SoLuongNhap = 3, SoLuongCon = 2, TinhTrang = "Mới", NhaCungCap = "Fahasa" },
+            new BookLot { MaLo = "LO009", MaSach = "S008", NgayNhap = new DateTime(2024, 7, 1), SoLuongNhap = 1, SoLuongCon = 0, TinhTrang = "Mới", NhaCungCap = "Tiki" },
+            new BookLot { MaLo = "LO010", MaSach = "S009", NgayNhap = new DateTime(2023, 8, 20), SoLuongNhap = 7, SoLuongCon = 7, TinhTrang = "Cũ", NhaCungCap = "Fahasa" },
+            new BookLot { MaLo = "LO011", MaSach = "S010", NgayNhap = new DateTime(2024, 1, 28), SoLuongNhap = 5, SoLuongCon = 5, TinhTrang = "Mới", NhaCungCap = "Nhà sách Thành Nghĩa" },
+        };
+
         public static List<Reader> Readers = new List<Reader>
         {
             new Reader { MaDocGia = "DG001", HoTen = "Nguyễn Văn Minh", Email = "minh@email.com", SDT = "0901234567", DiaChi = "Hà Nội", NgayDangKy = new DateTime(2024, 1, 15) },
@@ -44,12 +59,12 @@ namespace LibraryManagement.Models
 
         public static List<BorrowRecord> BorrowRecords = new List<BorrowRecord>
         {
-            new BorrowRecord { MaMuon = "M001", MaDocGia = "DG001", TenDocGia = "Nguyễn Văn Minh", MaSach = "S001", TenSach = "Lập trình C# cơ bản", NgayMuon = DateTime.Now.AddDays(-20), NgayHenTra = DateTime.Now.AddDays(-6), TrangThai = "Đang mượn", TienPhat = 30000 },
-            new BorrowRecord { MaMuon = "M002", MaDocGia = "DG002", TenDocGia = "Trần Thị Lan", MaSach = "S003", TenSach = "Trí tuệ nhân tạo", NgayMuon = DateTime.Now.AddDays(-10), NgayHenTra = DateTime.Now.AddDays(4), TrangThai = "Đang mượn" },
-            new BorrowRecord { MaMuon = "M003", MaDocGia = "DG003", TenDocGia = "Lê Hoàng Nam", MaSach = "S005", TenSach = "Lịch sử thế giới cận đại", NgayMuon = DateTime.Now.AddDays(-30), NgayHenTra = DateTime.Now.AddDays(-16), TrangThai = "Đang mượn", TienPhat = 80000 },
-            new BorrowRecord { MaMuon = "M004", MaDocGia = "DG004", TenDocGia = "Phạm Thị Hoa", MaSach = "S002", TenSach = "Cấu trúc dữ liệu và giải thuật", NgayMuon = DateTime.Now.AddDays(-5), NgayHenTra = DateTime.Now.AddDays(9), TrangThai = "Đang mượn" },
-            new BorrowRecord { MaMuon = "M005", MaDocGia = "DG001", TenDocGia = "Nguyễn Văn Minh", MaSach = "S004", TenSach = "Văn học Việt Nam hiện đại", NgayMuon = DateTime.Now.AddDays(-40), NgayHenTra = DateTime.Now.AddDays(-26), NgayTraThuc = DateTime.Now.AddDays(-20), TrangThai = "Đã trả" },
-            new BorrowRecord { MaMuon = "M006", MaDocGia = "DG005", TenDocGia = "Võ Thanh Tùng", MaSach = "S007", TenSach = "Tâm lý học đại cương", NgayMuon = DateTime.Now.AddDays(-8), NgayHenTra = DateTime.Now.AddDays(6), TrangThai = "Đang mượn" },
+            new BorrowRecord { MaMuon = "M001", MaDocGia = "DG001", TenDocGia = "Nguyễn Văn Minh", MaSach = "S001", MaLo = "LO001", TenSach = "Lập trình C# cơ bản", NgayMuon = DateTime.Now.AddDays(-20), NgayHenTra = DateTime.Now.AddDays(-6), TrangThai = "Đang mượn", TienPhat = 30000 },
+            new BorrowRecord { MaMuon = "M002", MaDocGia = "DG002", TenDocGia = "Trần Thị Lan", MaSach = "S003", MaLo = "LO004", TenSach = "Trí tuệ nhân tạo", NgayMuon = DateTime.Now.AddDays(-10), NgayHenTra = DateTime.Now.AddDays(4), TrangThai = "Đang mượn" },
+            new BorrowRecord { MaMuon = "M003", MaDocGia = "DG003", TenDocGia = "Lê Hoàng Nam", MaSach = "S005", MaLo = "LO006", TenSach = "Lịch sử thế giới cận đại", NgayMuon = DateTime.Now.AddDays(-30), NgayHenTra = DateTime.Now.AddDays(-16), TrangThai = "Đang mượn", TienPhat = 80000 },
+            new BorrowRecord { MaMuon = "M004", MaDocGia = "DG004", TenDocGia = "Phạm Thị Hoa", MaSach = "S002", MaLo = "LO003", TenSach = "Cấu trúc dữ liệu và giải thuật", NgayMuon = DateTime.Now.AddDays(-5), NgayHenTra = DateTime.Now.AddDays(9), TrangThai = "Đang mượn" },
+            new BorrowRecord { MaMuon = "M005", MaDocGia = "DG001", TenDocGia = "Nguyễn Văn Minh", MaSach = "S004", MaLo = "LO005", TenSach = "Văn học Việt Nam hiện đại", NgayMuon = DateTime.Now.AddDays(-40), NgayHenTra = DateTime.Now.AddDays(-26), NgayTraThuc = DateTime.Now.AddDays(-20), TrangThai = "Đã trả" },
+            new BorrowRecord { MaMuon = "M006", MaDocGia = "DG005", TenDocGia = "Võ Thanh Tùng", MaSach = "S007", MaLo = "LO008", TenSach = "Tâm lý học đại cương", NgayMuon = DateTime.Now.AddDays(-8), NgayHenTra = DateTime.Now.AddDays(6), TrangThai = "Đang mượn" },
         };
 
         public static List<string> Categories =>

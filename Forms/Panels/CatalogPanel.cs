@@ -13,6 +13,7 @@ namespace LibraryManagement.Forms.Panels
     {
         private TextBox txtMaDanhMuc = null!, txtTenDanhMuc = null!, txtMoTa = null!, txtViTriKe = null!;
         private CheckBox chkDangSuDung = null!;
+        private TextBox txtSearch = null!;
         private DataGridView dgvCategories = null!;
 
         public CatalogPanel()
@@ -63,6 +64,25 @@ namespace LibraryManagement.Forms.Panels
             btnClear.Click += (_, _) => ClearForm();
             inputCard.Controls.Add(btnClear);
 
+            inputCard.Controls.Add(new Label
+            {
+                Text = "Tìm kiếm danh mục",
+                Font = ThemeColors.SmallFont,
+                ForeColor = ThemeColors.TextSecondary,
+                Location = new Point(486, 130),
+                Size = new Size(150, 16),
+                BackColor = Color.Transparent
+            });
+            txtSearch = new TextBox
+            {
+                Location = new Point(486, 148),
+                Size = new Size(250, 28),
+                Font = ThemeColors.BodyFont,
+                BorderStyle = BorderStyle.FixedSingle
+            };
+            txtSearch.TextChanged += (_, _) => LoadCategories(txtSearch.Text.Trim());
+            inputCard.Controls.Add(txtSearch);
+
             Controls.Add(inputCard);
 
             dgvCategories = new DataGridView { Location = new Point(32, 296), Size = new Size(980, 360), Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom };
@@ -86,10 +106,21 @@ namespace LibraryManagement.Forms.Panels
             parent.Controls.Add(textBox);
         }
 
-        private void LoadCategories()
+        private void LoadCategories(string keyword = "")
         {
             dgvCategories.Rows.Clear();
-            foreach (var category in LibraryDataService.GetCategories())
+            var categories = LibraryDataService.GetCategories();
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                categories = categories
+                    .Where(c =>
+                        c.MaDanhMuc.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
+                        c.TenDanhMuc.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
+                        c.MoTa.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            foreach (var category in categories)
             {
                 dgvCategories.Rows.Add(
                     category.MaDanhMuc,
@@ -132,7 +163,7 @@ namespace LibraryManagement.Forms.Panels
             if (!result.Success) return;
 
             ClearForm();
-            LoadCategories();
+            LoadCategories(txtSearch.Text.Trim());
         }
 
         private void BtnXoa_Click(object? sender, EventArgs e)
@@ -154,7 +185,7 @@ namespace LibraryManagement.Forms.Panels
             if (!result.Success) return;
 
             ClearForm();
-            LoadCategories();
+            LoadCategories(txtSearch.Text.Trim());
         }
 
         private void ClearForm()

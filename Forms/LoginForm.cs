@@ -191,29 +191,8 @@ namespace LibraryManagement.Forms
 
             UserStore.CurrentUser = user;
 
-            Form mainForm = user.Role switch
-            {
-                UserRole.ThuThu => new LibrarianForm(),
-                UserRole.DocGia => new ReaderForm(),
-                UserRole.Admin => new AdminForm(),
-                _ => new LibrarianForm()
-            };
-
-            Hide();
-            using (mainForm)
-            {
-                mainForm.ShowDialog();
-            }
-
-            if (IsDisposed) return;
-
-            BuildLoginUi();
-            ResetLoginState();
-            Show();
-            BringToFront();
-            Activate();
-            Refresh();
-            txtUsername.Focus();
+            DialogResult = DialogResult.OK;
+            Close();
         }
 
         private void ShowError(string message)
@@ -222,13 +201,5 @@ namespace LibraryManagement.Forms
             lblError.Visible = true;
         }
 
-        private void ResetLoginState()
-        {
-            UserStore.CurrentUser = null;
-            txtPassword.Text = "";
-            txtUsername.Text = "";
-            lblError.Visible = false;
-            WindowState = FormWindowState.Normal;
-        }
     }
 }

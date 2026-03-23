@@ -41,23 +41,27 @@ namespace LibraryManagement.Forms.Panels
             // Row 1
             searchCard.Controls.Add(new Label { Text = "Tác giả", Font = ThemeColors.SmallFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(20, 14), Size = new Size(200, 18), BackColor = Color.Transparent });
             txtTacGia = new TextBox { Location = new Point(20, 34), Size = new Size(200, 32), Font = ThemeColors.BodyFont, BorderStyle = BorderStyle.FixedSingle };
+            txtTacGia.TextChanged += (_, _) => PerformSearch(silentWhenEmpty: true);
             searchCard.Controls.Add(txtTacGia);
 
             searchCard.Controls.Add(new Label { Text = "Nhan đề", Font = ThemeColors.SmallFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(240, 14), Size = new Size(200, 18), BackColor = Color.Transparent });
             txtNhanDe = new TextBox { Location = new Point(240, 34), Size = new Size(200, 32), Font = ThemeColors.BodyFont, BorderStyle = BorderStyle.FixedSingle };
+            txtNhanDe.TextChanged += (_, _) => PerformSearch(silentWhenEmpty: true);
             searchCard.Controls.Add(txtNhanDe);
 
             searchCard.Controls.Add(new Label { Text = "Chủ đề", Font = ThemeColors.SmallFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(460, 14), Size = new Size(200, 18), BackColor = Color.Transparent });
             txtChuDe = new TextBox { Location = new Point(460, 34), Size = new Size(200, 32), Font = ThemeColors.BodyFont, BorderStyle = BorderStyle.FixedSingle };
+            txtChuDe.TextChanged += (_, _) => PerformSearch(silentWhenEmpty: true);
             searchCard.Controls.Add(txtChuDe);
 
             searchCard.Controls.Add(new Label { Text = "Mã sách", Font = ThemeColors.SmallFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(680, 14), Size = new Size(160, 18), BackColor = Color.Transparent });
             txtMaSach = new TextBox { Location = new Point(680, 34), Size = new Size(160, 32), Font = ThemeColors.BodyFont, BorderStyle = BorderStyle.FixedSingle };
+            txtMaSach.TextChanged += (_, _) => PerformSearch(silentWhenEmpty: true);
             searchCard.Controls.Add(txtMaSach);
 
             // Search button
             var btnSearch = new RoundedButton { Text = "Tìm kiếm", Size = new Size(160, 44), Location = new Point(20, 86), ButtonColor = ThemeColors.Primary, Font = ThemeColors.ButtonFont };
-            btnSearch.Click += BtnSearch_Click;
+            btnSearch.Click += (_, _) => PerformSearch();
             searchCard.Controls.Add(btnSearch);
 
             var btnClear = new RoundedButton { Text = "Xóa bộ lọc", Size = new Size(140, 44), Location = new Point(196, 86), ButtonColor = ThemeColors.TextSecondary, Font = ThemeColors.ButtonFont };
@@ -74,6 +78,7 @@ namespace LibraryManagement.Forms.Panels
             dgvResults.Columns.Add("DanhMuc", "Danh mục");
             dgvResults.Columns.Add("ChuDe", "Chủ đề");
             dgvResults.Columns.Add("NXB", "NXB");
+            dgvResults.Columns.Add("SoLo", "Số lô");
             dgvResults.Columns.Add("SoLuong", "Còn lại");
             dgvResults.Columns.Add("TrangThai", "Trạng thái");
             ModernDataGridView.ApplyStyle(dgvResults);
@@ -83,30 +88,26 @@ namespace LibraryManagement.Forms.Panels
             Controls.Add(new Label { Text = "Nhấp đúp vào sách để xem chi tiết", Font = ThemeColors.SmallFont, ForeColor = ThemeColors.TextMuted, Location = new Point(32, 675), Size = new Size(400, 18), BackColor = Color.Transparent, Anchor = AnchorStyles.Bottom | AnchorStyles.Left });
         }
 
-        private void BtnSearch_Click(object? sender, EventArgs e)
+        private void PerformSearch(bool silentWhenEmpty = false)
         {
             dgvResults.Rows.Clear();
-            var results = SampleData.Books.AsEnumerable();
+            var list = LibraryDataService.SearchBooks(
+                tacGia: txtTacGia.Text.Trim(),
+                nhanDe: txtNhanDe.Text.Trim(),
+                chuDe: txtChuDe.Text.Trim(),
+                maSach: txtMaSach.Text.Trim()).ToList();
 
-            if (!string.IsNullOrWhiteSpace(txtTacGia.Text))
-                results = results.Where(b => b.TacGia.Contains(txtTacGia.Text.Trim(), StringComparison.OrdinalIgnoreCase));
-            if (!string.IsNullOrWhiteSpace(txtNhanDe.Text))
-                results = results.Where(b => b.TenSach.Contains(txtNhanDe.Text.Trim(), StringComparison.OrdinalIgnoreCase));
-            if (!string.IsNullOrWhiteSpace(txtChuDe.Text))
-                results = results.Where(b => b.ChuDe.Contains(txtChuDe.Text.Trim(), StringComparison.OrdinalIgnoreCase));
-            if (!string.IsNullOrWhiteSpace(txtMaSach.Text))
-                results = results.Where(b => b.MaSach.Contains(txtMaSach.Text.Trim(), StringComparison.OrdinalIgnoreCase));
-
-            var list = results.ToList();
             if (list.Count == 0)
             {
-                MessageBox.Show("Không tìm thấy sách!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                if (!silentWhenEmpty)
+                    MessageBox.Show("Không tìm thấy sách!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
             foreach (var b in list)
             {
-                dgvResults.Rows.Add(b.MaSach, b.TenSach, b.TacGia, LibraryDataService.GetCategoryName(b.MaDanhMuc, b.TheLoai), b.ChuDe, b.NhaXuatBan, b.SoLuongHienCo, b.TrangThai);
+                int soLo = LibraryDataService.GetLotsForBook(b.MaSach).Count;
+                dgvResults.Rows.Add(b.MaSach, b.TenSach, b.TacGia, LibraryDataService.GetCategoryName(b.MaDanhMuc, b.TheLoai), b.ChuDe, b.NhaXuatBan, soLo, b.SoLuongHienCo, b.TrangThai);
             }
         }
 

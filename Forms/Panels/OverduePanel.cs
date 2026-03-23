@@ -63,6 +63,7 @@ namespace LibraryManagement.Forms.Panels
             dgv.Columns.Add("MaMuon", "Mã phiếu");
             dgv.Columns.Add("MaDocGia", "Mã ĐG");
             dgv.Columns.Add("TenDocGia", "Tên độc giả");
+            dgv.Columns.Add("MaLo", "Mã lô");
             dgv.Columns.Add("TenSach", "Tên sách");
             dgv.Columns.Add("NgayMuon", "Ngày mượn");
             dgv.Columns.Add("NgayHenTra", "Hạn trả");
@@ -95,7 +96,7 @@ namespace LibraryManagement.Forms.Panels
             foreach (var r in overdues.OrderByDescending(r => r.SoNgayQuaHan))
             {
                 decimal tienPhat = LibraryDataService.CalculateLateFee(r);
-                int rowIdx = dgv.Rows.Add(r.MaMuon, r.MaDocGia, r.TenDocGia, r.TenSach,
+                int rowIdx = dgv.Rows.Add(r.MaMuon, r.MaDocGia, r.TenDocGia, string.IsNullOrWhiteSpace(r.MaLo) ? "—" : r.MaLo, r.TenSach,
                     r.NgayMuon.ToString("dd/MM/yyyy"), r.NgayHenTra.ToString("dd/MM/yyyy"),
                     r.SoNgayQuaHan.ToString() + " ngày", $"{tienPhat:N0} VNĐ");
 
