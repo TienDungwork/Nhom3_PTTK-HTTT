@@ -49,7 +49,7 @@ namespace LibraryManagement.Forms
             string[][] menuItems = {
                 new[] { "\uE80F", "Trang chủ" },
                 new[] { "\uE736", "Quản lý đầu sách" },
-                new[] { "\uE81C", "Quản lý lô nhập" },
+                new[] { "\uE81C", "Quản lý sách" },
                 new[] { "\uE8C8", "Quản lý danh mục sách" },
                 new[] { "\uE721", "Tra cứu & phân loại" },
                 new[] { "\uE762", "Quản lý mượn trả" },
@@ -115,7 +115,7 @@ namespace LibraryManagement.Forms
             {
                 0 => new LibrarianDashboard(),
                 1 => new BookTitlePanel(),
-                2 => new LotManagePanel(),
+                2 => new BookCopyManagePanel(),
                 3 => new CatalogPanel(),
                 4 => new ClassifyPanel(),
                 5 => new BorrowManagePanel(),

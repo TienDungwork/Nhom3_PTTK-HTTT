@@ -32,7 +32,7 @@ namespace LibraryManagement.Forms.Panels
             dgv.Columns.Add("MaMuon", "Mã phiếu");
             dgv.Columns.Add("MaDocGia", "Mã ĐG");
             dgv.Columns.Add("TenDocGia", "Tên độc giả");
-            dgv.Columns.Add("MaLo", "Mã lô");
+            dgv.Columns.Add("MaQuyenSach", "Mã quyển");
             dgv.Columns.Add("TenSach", "Tên sách");
             dgv.Columns.Add("NgayMuon", "Ngày mượn");
             dgv.Columns.Add("NgayHenTra", "Hạn trả");
@@ -51,7 +51,7 @@ namespace LibraryManagement.Forms.Panels
             {
                 string ngayTra = r.NgayTraThuc?.ToString("dd/MM/yyyy") ?? "—";
                 string tienPhat = r.TienPhat > 0 ? $"{r.TienPhat:N0} VNĐ" : "—";
-                int rowIdx = dgv.Rows.Add(r.MaMuon, r.MaDocGia, r.TenDocGia, string.IsNullOrWhiteSpace(r.MaLo) ? "—" : r.MaLo, r.TenSach, r.NgayMuon.ToString("dd/MM/yyyy"), r.NgayHenTra.ToString("dd/MM/yyyy"), ngayTra, r.TrangThai, tienPhat);
+                int rowIdx = dgv.Rows.Add(r.MaMuon, r.MaDocGia, r.TenDocGia, string.IsNullOrWhiteSpace(r.MaQuyenSach) ? "—" : r.MaQuyenSach, r.TenSach, r.NgayMuon.ToString("dd/MM/yyyy"), r.NgayHenTra.ToString("dd/MM/yyyy"), ngayTra, r.TrangThai, tienPhat);
 
                 if (r.IsOverdue)
                 {
@@ -78,7 +78,7 @@ namespace LibraryManagement.Forms.Panels
                     r.TenSach.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
                     r.MaSach.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
                     r.MaDocGia.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
-                    r.MaLo.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+                    r.MaQuyenSach.Contains(keyword, StringComparison.OrdinalIgnoreCase))
                 .ToList();
             LoadRecords(filtered);
         }

@@ -53,8 +53,8 @@ namespace LibraryManagement.Forms.Dialogs
             AddField("Mã sách:", book.MaSach, 20, ref y);
             AddField("Số lượng hiện có:", book.SoLuongHienCo.ToString() + " / " + book.SoLuong.ToString(), 20, ref y);
             AddField("Vị trí kho:", book.ViTriKho, 20, ref y);
-            var lots = LibraryDataService.GetLotsForBook(book.MaSach);
-            AddField("Số lô nhập:", lots.Count.ToString(), 20, ref y);
+            var copies = LibraryDataService.GetCopiesForBook(book.MaSach);
+            AddField("Số quyển sách:", copies.Count.ToString(), 20, ref y);
 
             // Status badge
             var lblStatus = new Label

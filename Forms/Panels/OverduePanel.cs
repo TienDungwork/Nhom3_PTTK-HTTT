@@ -15,7 +15,7 @@ namespace LibraryManagement.Forms.Panels
         private TextBox txtMaDocGia = null!;
         private TextBox txtTenDocGia = null!;
         private TextBox txtMaSach = null!;
-        private TextBox txtMaLo = null!;
+        private TextBox txtMaQuyenSach = null!;
         private NumericUpDown nudMinDays = null!;
 
         public OverduePanel()
@@ -39,7 +39,7 @@ namespace LibraryManagement.Forms.Panels
             AddFilterBox(filterCard, "Mã độc giả", 16, out txtMaDocGia);
             AddFilterBox(filterCard, "Tên độc giả", 216, out txtTenDocGia);
             AddFilterBox(filterCard, "Mã sách", 416, out txtMaSach);
-            AddFilterBox(filterCard, "Mã lô", 616, out txtMaLo);
+            AddFilterBox(filterCard, "Mã quyển", 616, out txtMaQuyenSach);
 
             filterCard.Controls.Add(new Label { Text = "Tối thiểu ngày trễ", Font = ThemeColors.SmallFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(816, 8), Size = new Size(140, 16), BackColor = Color.Transparent });
             nudMinDays = new NumericUpDown { Location = new Point(816, 28), Size = new Size(120, 28), Font = ThemeColors.BodyFont, Minimum = 0, Maximum = 365, Value = 0 };
@@ -61,7 +61,7 @@ namespace LibraryManagement.Forms.Panels
             dgv.Columns.Add("MaDocGia", "Mã ĐG");
             dgv.Columns.Add("TenDocGia", "Tên độc giả");
             dgv.Columns.Add("MaSach", "Mã sách");
-            dgv.Columns.Add("MaLo", "Mã lô");
+            dgv.Columns.Add("MaQuyenSach", "Mã quyển");
             dgv.Columns.Add("TenSach", "Tên sách");
             dgv.Columns.Add("NgayHenTra", "Hạn trả");
             dgv.Columns.Add("SoNgay", "Số ngày trễ");
@@ -93,8 +93,8 @@ namespace LibraryManagement.Forms.Panels
                 query = query.Where(r => r.TenDocGia.Contains(txtTenDocGia.Text.Trim(), StringComparison.OrdinalIgnoreCase));
             if (!string.IsNullOrWhiteSpace(txtMaSach.Text))
                 query = query.Where(r => r.MaSach.Contains(txtMaSach.Text.Trim(), StringComparison.OrdinalIgnoreCase));
-            if (!string.IsNullOrWhiteSpace(txtMaLo.Text))
-                query = query.Where(r => r.MaLo.Contains(txtMaLo.Text.Trim(), StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrWhiteSpace(txtMaQuyenSach.Text))
+                query = query.Where(r => r.MaQuyenSach.Contains(txtMaQuyenSach.Text.Trim(), StringComparison.OrdinalIgnoreCase));
             if ((int)nudMinDays.Value > 0)
                 query = query.Where(r => r.SoNgayQuaHan >= (int)nudMinDays.Value);
 
@@ -106,7 +106,7 @@ namespace LibraryManagement.Forms.Panels
                     r.MaDocGia,
                     r.TenDocGia,
                     r.MaSach,
-                    string.IsNullOrWhiteSpace(r.MaLo) ? "—" : r.MaLo,
+                    string.IsNullOrWhiteSpace(r.MaQuyenSach) ? "—" : r.MaQuyenSach,
                     r.TenSach,
                     r.NgayHenTra.ToString("dd/MM/yyyy"),
                     r.SoNgayQuaHan + " ngày",

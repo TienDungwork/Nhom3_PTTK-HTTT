@@ -78,7 +78,7 @@ namespace LibraryManagement.Forms.Panels
             dgvResults.Columns.Add("DanhMuc", "Danh mục");
             dgvResults.Columns.Add("ChuDe", "Chủ đề");
             dgvResults.Columns.Add("NXB", "NXB");
-            dgvResults.Columns.Add("SoLo", "Số lô");
+            dgvResults.Columns.Add("SoQuyen", "Số quyển");
             dgvResults.Columns.Add("SoLuong", "Còn lại");
             dgvResults.Columns.Add("TrangThai", "Trạng thái");
             ModernDataGridView.ApplyStyle(dgvResults);
@@ -106,8 +106,8 @@ namespace LibraryManagement.Forms.Panels
 
             foreach (var b in list)
             {
-                int soLo = LibraryDataService.GetLotsForBook(b.MaSach).Count;
-                dgvResults.Rows.Add(b.MaSach, b.TenSach, b.TacGia, LibraryDataService.GetCategoryName(b.MaDanhMuc, b.TheLoai), b.ChuDe, b.NhaXuatBan, soLo, b.SoLuongHienCo, b.TrangThai);
+                int soQuyen = LibraryDataService.GetCopiesForBook(b.MaSach).Count;
+                dgvResults.Rows.Add(b.MaSach, b.TenSach, b.TacGia, LibraryDataService.GetCategoryName(b.MaDanhMuc, b.TheLoai), b.ChuDe, b.NhaXuatBan, soQuyen, b.SoLuongHienCo, b.TrangThai);
             }
         }
 

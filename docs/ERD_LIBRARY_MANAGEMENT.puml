@@ -1,0 +1,156 @@
+@startuml
+hide circle
+left to right direction
+skinparam monochrome true
+skinparam shadowing false
+skinparam linetype ortho
+skinparam roundcorner 6
+skinparam defaultFontName Arial
+skinparam dpi 150
+
+entity "APP_USERS" as APP_USERS {
+  * ma_tk : INT <<PK>>
+  --
+  username : TEXT <<UK>>
+  password : TEXT
+  ho_ten : TEXT
+  email : TEXT
+  sdt : TEXT
+  role : TEXT
+  is_active : INT
+  ngay_tao : DATE
+}
+
+entity "LIBRARIANS" as LIBRARIANS {
+  * ma_thu_thu : INT <<PK>>
+  --
+  ma_tk : INT <<FK, UK>>
+}
+
+entity "READERS" as READERS {
+  * ma_doc_gia : INT <<PK>>
+  --
+  ma_tk : INT <<FK, UK>>
+  dia_chi : TEXT
+  ngay_dang_ky : DATE
+}
+
+entity "ADMINS" as ADMINS {
+  * ma_quan_tri : INT <<PK>>
+  --
+  ma_tk : INT <<FK, UK>>
+}
+
+entity "BOOK_CATEGORIES" as BOOK_CATEGORIES {
+  * ma_danh_muc : INT <<PK>>
+  --
+  ten_danh_muc : TEXT <<UK>>
+  mo_ta : TEXT
+  vi_tri_ke : TEXT
+  dang_su_dung : INT
+}
+
+entity "BOOK_TITLES" as BOOK_TITLES {
+  * ma_dau_sach : INT <<PK>>
+  --
+  ma_danh_muc : INT <<FK>>
+  ten_sach : TEXT
+  tac_gia : TEXT
+  chu_de : TEXT
+  nha_xuat_ban : TEXT
+  nam_xuat_ban : INT
+  isbn : TEXT
+  vi_tri_kho : TEXT
+  trang_thai : TEXT
+}
+
+entity "BOOK_COPIES" as BOOK_COPIES {
+  * ma_quyen_sach : INT <<PK>>
+  --
+  ma_dau_sach : INT <<FK>>
+  ngay_nhap : DATE
+  tinh_trang : TEXT
+  trang_thai : TEXT
+  vi_tri : TEXT
+}
+
+entity "RESERVATION_SLIPS" as RESERVATION_SLIPS {
+  * ma_phieu_dat : INT <<PK>>
+  --
+  ma_doc_gia : INT <<FK>>
+  ma_thu_thu_duyet : INT <<FK, NULL>>
+  ngay_dat : DATE
+  trang_thai : TEXT
+}
+
+entity "LOAN_SLIPS" as LOAN_SLIPS {
+  * ma_phieu_muon : INT <<PK>>
+  --
+  ma_phieu_dat : INT <<FK, NULL, UK>>
+  ma_doc_gia : INT <<FK>>
+  ma_thu_thu : INT <<FK>>
+  ngay_muon : DATE
+  han_tra : DATE
+  trang_thai : TEXT
+  tien_phat : REAL
+  da_thu_phat : INT
+}
+
+entity "LOAN_DETAILS" as LOAN_DETAILS {
+  * ma_phieu_muon : INT <<PK, FK>>
+  * ma_quyen_sach : INT <<PK, FK>>
+  --
+  so_luong : INT
+  ngay_tra_thuc : DATE
+  trang_thai : TEXT
+}
+
+entity "NOTIFICATIONS" as NOTIFICATIONS {
+  * ma_thong_bao : INT <<PK>>
+  --
+  ma_doc_gia : INT <<FK>>
+  noi_dung : TEXT
+  ngay_gui : DATE
+  trang_thai : TEXT
+}
+
+entity "SYSTEM_LOGS" as SYSTEM_LOGS {
+  * ma_nhat_ky : INT <<PK>>
+  --
+  ma_quan_tri : INT <<FK>>
+  hanh_dong : TEXT
+  chi_tiet : TEXT
+  thoi_gian : DATE
+}
+
+entity "SYSTEM_CONFIGS" as SYSTEM_CONFIGS {
+  * ma_cau_hinh : INT <<PK>>
+  --
+  ma_quan_tri : INT <<FK, UK>>
+  so_ngay_muon_toi_da : INT
+  so_sach_muon_toi_da : INT
+  phi_phat_moi_ngay : REAL
+}
+
+APP_USERS ||..o| LIBRARIANS
+APP_USERS ||..o| READERS
+APP_USERS ||..o| ADMINS
+
+BOOK_CATEGORIES ||..o{ BOOK_TITLES
+BOOK_TITLES ||..o{ BOOK_COPIES
+
+READERS ||..o{ RESERVATION_SLIPS
+LIBRARIANS ||..o{ RESERVATION_SLIPS
+
+RESERVATION_SLIPS ||..o| LOAN_SLIPS
+READERS ||..o{ LOAN_SLIPS
+LIBRARIANS ||..o{ LOAN_SLIPS
+
+LOAN_SLIPS ||..o{ LOAN_DETAILS
+BOOK_COPIES ||..o{ LOAN_DETAILS
+
+READERS ||..o{ NOTIFICATIONS
+ADMINS ||..o{ SYSTEM_LOGS
+ADMINS ||..|| SYSTEM_CONFIGS
+
+@enduml

@@ -61,31 +61,33 @@ namespace LibraryManagement.Models
             return list;
         }
 
-        public static IReadOnlyList<BookLot> GetLotsForBook(string maSach, bool includeZero = true)
+        public static IReadOnlyList<BookCopy> GetCopiesForBook(string maSach, bool includeUnavailable = true)
         {
-            var query = SampleData.BookLots.Where(l => l.MaSach == maSach);
-            if (!includeZero) query = query.Where(l => l.SoLuongCon > 0);
-            return query.OrderBy(l => l.NgayNhap).ThenBy(l => l.MaLo).ToList();
+            var query = SampleData.BookCopies.Where(c => c.MaSach == maSach);
+            if (!includeUnavailable)
+                query = query.Where(c => string.Equals(c.TrangThai, "Có sẵn", StringComparison.OrdinalIgnoreCase));
+
+            return query.OrderBy(c => c.NgayNhap).ThenBy(c => c.MaQuyenSach).ToList();
         }
 
-        public static IReadOnlyList<BookLot> SearchLots(string keyword = "", string maSach = "")
+        public static IReadOnlyList<BookCopy> SearchCopies(string keyword = "", string maSach = "")
         {
-            var query = SampleData.BookLots.AsEnumerable();
+            var query = SampleData.BookCopies.AsEnumerable();
             if (!string.IsNullOrWhiteSpace(maSach))
-                query = query.Where(l => l.MaSach == maSach);
+                query = query.Where(c => c.MaSach == maSach);
 
             if (!string.IsNullOrWhiteSpace(keyword))
             {
                 string kw = keyword.Trim();
-                query = query.Where(l =>
-                    l.MaLo.Contains(kw, StringComparison.OrdinalIgnoreCase) ||
-                    l.MaSach.Contains(kw, StringComparison.OrdinalIgnoreCase) ||
-                    GetBookName(l.MaSach).Contains(kw, StringComparison.OrdinalIgnoreCase) ||
-                    l.NhaCungCap.Contains(kw, StringComparison.OrdinalIgnoreCase) ||
-                    l.TinhTrang.Contains(kw, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(c =>
+                    c.MaQuyenSach.Contains(kw, StringComparison.OrdinalIgnoreCase) ||
+                    c.MaSach.Contains(kw, StringComparison.OrdinalIgnoreCase) ||
+                    GetBookName(c.MaSach).Contains(kw, StringComparison.OrdinalIgnoreCase) ||
+                    c.NhaCungCap.Contains(kw, StringComparison.OrdinalIgnoreCase) ||
+                    c.TrangThai.Contains(kw, StringComparison.OrdinalIgnoreCase));
             }
 
-            return query.OrderByDescending(l => l.NgayNhap).ThenBy(l => l.MaLo).ToList();
+            return query.OrderByDescending(c => c.NgayNhap).ThenBy(c => c.MaQuyenSach).ToList();
         }
 
         public static string GetBookName(string maSach)
@@ -96,16 +98,12 @@ namespace LibraryManagement.Models
         public static void NormalizeData()
         {
             foreach (var book in SampleData.Books)
-            {
                 SyncBookCategory(book);
-            }
 
-            EnsureLotsForAllBooks();
+            EnsureCopiesForAllBooks();
 
             foreach (var book in SampleData.Books)
-            {
-                RecalculateBookInventoryFromLots(book.MaSach);
-            }
+                RecalculateBookInventoryFromCopies(book.MaSach);
         }
 
         public static void SyncBookCategory(Book book)
@@ -136,16 +134,15 @@ namespace LibraryManagement.Models
             book.TrangThai = book.SoLuongHienCo > 0 ? "Có sẵn" : "Hết sách";
         }
 
-        public static void RecalculateBookInventoryFromLots(string maSach)
+        public static void RecalculateBookInventoryFromCopies(string maSach)
         {
             var book = SampleData.Books.FirstOrDefault(b => b.MaSach == maSach);
             if (book == null) return;
 
-            var lots = SampleData.BookLots.Where(l => l.MaSach == maSach).ToList();
-            int total = lots.Sum(l => l.SoLuongNhap);
-            int conLai = lots.Sum(l => l.SoLuongCon);
-            int dangMuon = SampleData.BorrowRecords.Count(r => r.MaSach == maSach && r.TrangThai == "Đang mượn");
-            int matHong = Math.Max(0, total - conLai - dangMuon);
+            var copies = SampleData.BookCopies.Where(c => c.MaSach == maSach).ToList();
+            int total = copies.Sum(c => Math.Max(1, c.SoLuong));
+            int dangMuon = copies.Count(c => c.TrangThai == "Đang mượn");
+            int matHong = copies.Count(c => c.TrangThai == "Mất" || c.TrangThai == "Hỏng");
 
             book.SoLuong = total;
             book.SoLuongDangMuon = dangMuon;
@@ -176,26 +173,11 @@ namespace LibraryManagement.Models
                 if (existing != null)
                     return (false, "Mã sách đã tồn tại.");
 
+                book.SoLuong = 0;
                 book.SoLuongDangMuon = 0;
                 book.SoLuongMatHong = 0;
                 SyncBookStatus(book);
                 SampleData.Books.Add(book);
-
-                if (book.SoLuong > 0)
-                {
-                    SampleData.BookLots.Add(new BookLot
-                    {
-                        MaLo = GenerateLotCode(),
-                        MaSach = book.MaSach,
-                        NgayNhap = DateTime.Today,
-                        SoLuongNhap = book.SoLuong,
-                        SoLuongCon = book.SoLuong,
-                        TinhTrang = "Mới",
-                        NhaCungCap = book.NhaCungCap
-                    });
-                    RecalculateBookInventoryFromLots(book.MaSach);
-                }
-
                 return (true, "Thêm đầu sách thành công.");
             }
 
@@ -213,7 +195,7 @@ namespace LibraryManagement.Models
             existing.ISBN = book.ISBN;
             existing.ViTriKho = book.ViTriKho;
             existing.NhaCungCap = book.NhaCungCap;
-            RecalculateBookInventoryFromLots(existing.MaSach);
+            RecalculateBookInventoryFromCopies(existing.MaSach);
 
             return (true, "Cập nhật đầu sách thành công.");
         }
@@ -227,10 +209,10 @@ namespace LibraryManagement.Models
             if (SampleData.BorrowRecords.Any(r => r.MaSach == maSach && r.TrangThai == "Đang mượn"))
                 return (false, "Không thể xóa đầu sách đang có bản sách được mượn.");
 
-            if (SampleData.BookLots.Any(l => l.MaSach == maSach && l.SoLuongDaXuat > 0))
-                return (false, "Không thể xóa đầu sách đã phát sinh giao dịch theo lô.");
+            if (SampleData.BorrowRecords.Any(r => r.MaSach == maSach))
+                return (false, "Không thể xóa đầu sách đã phát sinh giao dịch mượn/trả.");
 
-            SampleData.BookLots.RemoveAll(l => l.MaSach == maSach);
+            SampleData.BookCopies.RemoveAll(c => c.MaSach == maSach);
             SampleData.Books.Remove(book);
             return (true, $"Đã xóa đầu sách \"{book.TenSach}\".");
         }
@@ -283,80 +265,83 @@ namespace LibraryManagement.Models
             return (true, $"Đã xóa danh mục \"{category.TenDanhMuc}\".");
         }
 
-        public static (bool Success, string Message) SaveLot(BookLot lot, bool isEditMode)
+        public static (bool Success, string Message) SaveCopy(BookCopy copy, bool isEditMode)
         {
-            if (string.IsNullOrWhiteSpace(lot.MaLo) || string.IsNullOrWhiteSpace(lot.MaSach))
-                return (false, "Mã lô và mã sách là bắt buộc.");
-            if (lot.SoLuongNhap < 0 || lot.SoLuongCon < 0)
-                return (false, "Số lượng không hợp lệ.");
-            if (lot.SoLuongCon > lot.SoLuongNhap)
-                return (false, "Số lượng còn không được lớn hơn số lượng nhập.");
-            if (SampleData.Books.FirstOrDefault(b => b.MaSach == lot.MaSach) == null)
-                return (false, "Mã sách không tồn tại.");
+            if (string.IsNullOrWhiteSpace(copy.MaQuyenSach) || string.IsNullOrWhiteSpace(copy.MaSach))
+                return (false, "Mã quyển sách và mã đầu sách là bắt buộc.");
 
-            var existing = SampleData.BookLots.FirstOrDefault(l => l.MaLo == lot.MaLo);
+            if (copy.SoLuong <= 0)
+                return (false, "Số lượng phải lớn hơn 0.");
+
+            if (SampleData.Books.FirstOrDefault(b => b.MaSach == copy.MaSach) == null)
+                return (false, "Mã đầu sách không tồn tại.");
+
+            var existing = SampleData.BookCopies.FirstOrDefault(c => c.MaQuyenSach == copy.MaQuyenSach);
             if (!isEditMode)
             {
                 if (existing != null)
-                    return (false, "Mã lô đã tồn tại.");
-                if (SampleData.Books.FirstOrDefault(b => b.MaSach == lot.MaSach) == null)
-                    return (false, "Mã sách không tồn tại.");
+                    return (false, "Mã quyển sách đã tồn tại.");
 
-                SampleData.BookLots.Add(lot);
-                RecalculateBookInventoryFromLots(lot.MaSach);
-                return (true, "Thêm lô nhập thành công.");
+                SampleData.BookCopies.Add(copy);
+                RecalculateBookInventoryFromCopies(copy.MaSach);
+                return (true, "Thêm quyển sách thành công.");
             }
 
             if (existing == null)
-                return (false, "Không tìm thấy lô nhập.");
+                return (false, "Không tìm thấy quyển sách.");
 
-            int daXuatCu = existing.SoLuongDaXuat;
-            if (lot.SoLuongNhap < daXuatCu)
-                return (false, "Số lượng nhập không thể nhỏ hơn số đã xuất của lô.");
-            if (lot.SoLuongCon > lot.SoLuongNhap)
-                return (false, "Số lượng còn không hợp lệ.");
+            if (existing.TrangThai == "Đang mượn" && copy.TrangThai != "Đang mượn")
+            {
+                bool hasOpenBorrow = SampleData.BorrowRecords.Any(r =>
+                    r.MaQuyenSach == existing.MaQuyenSach && r.TrangThai == "Đang mượn");
+                if (hasOpenBorrow)
+                    return (false, "Không thể đổi trạng thái quyển sách đang có phiếu mượn.");
+            }
 
-            existing.NgayNhap = lot.NgayNhap;
-            existing.TinhTrang = lot.TinhTrang;
-            existing.NhaCungCap = lot.NhaCungCap;
-            existing.GhiChu = lot.GhiChu;
-            existing.SoLuongNhap = lot.SoLuongNhap;
-            existing.SoLuongCon = lot.SoLuongCon;
-            RecalculateBookInventoryFromLots(existing.MaSach);
+            existing.NgayNhap = copy.NgayNhap;
+            existing.TrangThai = copy.TrangThai;
+            existing.NhaCungCap = copy.NhaCungCap;
+            existing.GhiChu = copy.GhiChu;
+            existing.SoLuong = copy.SoLuong;
+            RecalculateBookInventoryFromCopies(existing.MaSach);
 
-            return (true, "Cập nhật lô nhập thành công.");
+            return (true, "Cập nhật quyển sách thành công.");
         }
 
-        public static (bool Success, string Message) DeleteLot(string maLo)
+        public static (bool Success, string Message) DeleteCopy(string maQuyenSach)
         {
-            var lot = SampleData.BookLots.FirstOrDefault(l => l.MaLo == maLo);
-            if (lot == null)
-                return (false, "Không tìm thấy lô nhập.");
-            if (lot.SoLuongDaXuat > 0)
-                return (false, "Không thể xóa lô đã phát sinh mượn/trả.");
+            var copy = SampleData.BookCopies.FirstOrDefault(c => c.MaQuyenSach == maQuyenSach);
+            if (copy == null)
+                return (false, "Không tìm thấy quyển sách.");
 
-            SampleData.BookLots.Remove(lot);
-            RecalculateBookInventoryFromLots(lot.MaSach);
-            return (true, $"Đã xóa lô {lot.MaLo}.");
+            if (copy.TrangThai == "Đang mượn")
+                return (false, "Không thể xóa quyển sách đang được mượn.");
+
+            if (SampleData.BorrowRecords.Any(r => r.MaQuyenSach == maQuyenSach))
+                return (false, "Không thể xóa quyển sách đã phát sinh giao dịch.");
+
+            SampleData.BookCopies.Remove(copy);
+            RecalculateBookInventoryFromCopies(copy.MaSach);
+            return (true, $"Đã xóa quyển sách {copy.MaQuyenSach}.");
         }
 
-        public static (bool Success, string Message, string LotCode) BorrowBook(
+        public static (bool Success, string Message, string CopyCode) BorrowBook(
             string maSach,
             string maDocGia,
             string tenDocGia,
             DateTime ngayMuon,
             int soNgayMuon,
-            string maLo = "")
+            string maQuyenSach = "")
         {
             var book = SampleData.Books.FirstOrDefault(b => b.MaSach == maSach);
             if (book == null)
                 return (false, "Không tìm thấy đầu sách.", "");
 
-            var lot = PickLotForBorrow(maSach, maLo);
-            if (lot == null)
-                return (false, "Không còn bản sách khả dụng theo lô.", "");
+            var copy = PickCopyForBorrow(maSach, maQuyenSach);
+            if (copy == null)
+                return (false, "Không còn quyển sách khả dụng.", "");
 
-            lot.SoLuongCon--;
+            copy.TrangThai = "Đang mượn";
 
             SampleData.BorrowRecords.Add(new BorrowRecord
             {
@@ -365,15 +350,15 @@ namespace LibraryManagement.Models
                 TenDocGia = tenDocGia,
                 MaSach = maSach,
                 TenSach = book.TenSach,
-                MaLo = lot.MaLo,
+                MaQuyenSach = copy.MaQuyenSach,
                 NgayMuon = ngayMuon,
                 NgayHenTra = ngayMuon.AddDays(soNgayMuon),
                 TrangThai = "Đang mượn",
                 DaThuPhat = false
             });
 
-            RecalculateBookInventoryFromLots(maSach);
-            return (true, $"Mượn sách \"{book.TenSach}\" thành công.", lot.MaLo);
+            RecalculateBookInventoryFromCopies(maSach);
+            return (true, $"Mượn sách \"{book.TenSach}\" thành công.", copy.MaQuyenSach);
         }
 
         public static (bool Success, string Message, BorrowRecord? Record) ReturnBook(string maSach, string maDocGia, DateTime ngayTra)
@@ -400,23 +385,14 @@ namespace LibraryManagement.Models
             record.TrangThai = "Đã trả";
             record.TienPhat = CalculateLateFee(record, ngayTra);
 
-            if (!string.IsNullOrWhiteSpace(record.MaLo))
+            if (!string.IsNullOrWhiteSpace(record.MaQuyenSach))
             {
-                var lot = SampleData.BookLots.FirstOrDefault(l => l.MaLo == record.MaLo);
-                if (lot != null && lot.SoLuongCon < lot.SoLuongNhap)
-                    lot.SoLuongCon++;
-            }
-            else
-            {
-                var fallbackLot = SampleData.BookLots
-                    .Where(l => l.MaSach == record.MaSach)
-                    .OrderBy(l => l.NgayNhap)
-                    .FirstOrDefault();
-                if (fallbackLot != null && fallbackLot.SoLuongCon < fallbackLot.SoLuongNhap)
-                    fallbackLot.SoLuongCon++;
+                var copy = SampleData.BookCopies.FirstOrDefault(c => c.MaQuyenSach == record.MaQuyenSach);
+                if (copy != null && copy.TrangThai == "Đang mượn")
+                    copy.TrangThai = "Có sẵn";
             }
 
-            RecalculateBookInventoryFromLots(record.MaSach);
+            RecalculateBookInventoryFromCopies(record.MaSach);
         }
 
         public static (bool Success, string Message) CollectFine(string maMuon)
@@ -470,62 +446,63 @@ namespace LibraryManagement.Models
 
             int sum = 0;
             for (int i = 0; i < 9; i++)
-            {
                 sum += (10 - i) * (normalized[i] - '0');
-            }
 
             int lastValue = normalized[9] is 'X' or 'x' ? 10 : (normalized[9] - '0');
             sum += lastValue;
             return sum % 11 == 0;
         }
 
-        private static void EnsureLotsForAllBooks()
+        private static void EnsureCopiesForAllBooks()
         {
             foreach (var book in SampleData.Books)
             {
-                bool hasLot = SampleData.BookLots.Any(l => l.MaSach == book.MaSach);
-                if (hasLot) continue;
+                bool hasCopy = SampleData.BookCopies.Any(c => c.MaSach == book.MaSach);
+                if (hasCopy) continue;
 
-                SampleData.BookLots.Add(new BookLot
+                int initial = Math.Max(0, book.SoLuong);
+                for (int i = 0; i < initial; i++)
                 {
-                    MaLo = GenerateLotCode(),
-                    MaSach = book.MaSach,
-                    NgayNhap = DateTime.Today,
-                    SoLuongNhap = Math.Max(0, book.SoLuong),
-                    SoLuongCon = Math.Max(0, book.SoLuong - book.SoLuongDangMuon - book.SoLuongMatHong),
-                    TinhTrang = "Mới",
-                    NhaCungCap = book.NhaCungCap
-                });
+                    SampleData.BookCopies.Add(new BookCopy
+                    {
+                        MaQuyenSach = GenerateCopyCode(),
+                        MaSach = book.MaSach,
+                        NgayNhap = DateTime.Today,
+                        SoLuong = 1,
+                        TrangThai = "Có sẵn",
+                        NhaCungCap = book.NhaCungCap
+                    });
+                }
             }
         }
 
-        private static BookLot? PickLotForBorrow(string maSach, string maLo)
+        private static BookCopy? PickCopyForBorrow(string maSach, string maQuyenSach)
         {
-            if (!string.IsNullOrWhiteSpace(maLo))
+            if (!string.IsNullOrWhiteSpace(maQuyenSach))
             {
-                var selected = SampleData.BookLots.FirstOrDefault(l => l.MaLo == maLo && l.MaSach == maSach);
-                if (selected != null && selected.SoLuongCon > 0)
+                var selected = SampleData.BookCopies.FirstOrDefault(c => c.MaQuyenSach == maQuyenSach && c.MaSach == maSach);
+                if (selected != null && selected.TrangThai == "Có sẵn")
                     return selected;
                 return null;
             }
 
-            return SampleData.BookLots
-                .Where(l => l.MaSach == maSach && l.SoLuongCon > 0)
-                .OrderBy(l => l.NgayNhap)
-                .ThenBy(l => l.MaLo)
+            return SampleData.BookCopies
+                .Where(c => c.MaSach == maSach && c.TrangThai == "Có sẵn")
+                .OrderBy(c => c.NgayNhap)
+                .ThenBy(c => c.MaQuyenSach)
                 .FirstOrDefault();
         }
 
-        public static string GenerateLotCode()
+        public static string GenerateCopyCode()
         {
-            int max = SampleData.BookLots
-                .Select(l => l.MaLo)
-                .Where(code => code.StartsWith("LO", StringComparison.OrdinalIgnoreCase))
-                .Select(code => int.TryParse(code.Substring(2), out int n) ? n : 0)
+            int max = SampleData.BookCopies
+                .Select(c => c.MaQuyenSach)
+                .Where(code => code.StartsWith("Q", StringComparison.OrdinalIgnoreCase))
+                .Select(code => int.TryParse(code.Substring(1), out int n) ? n : 0)
                 .DefaultIfEmpty(0)
                 .Max();
 
-            return "LO" + (max + 1).ToString("D3");
+            return "Q" + (max + 1).ToString("D3");
         }
     }
 }

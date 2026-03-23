@@ -1,87 +1,102 @@
-# Sơ Đồ ERD Hệ Thống Quản Lý Thư Viện
+# ERD Hệ Thống Quản Lý Thư Viện (Theo `library_management.sql`)
 
-```mermaid
-erDiagram
-    BOOK_CATEGORIES ||--o{ BOOKS : "phan_loai"
-    BOOKS ||--o{ BOOK_LOTS : "co_lo_nhap"
-    READERS ||--o{ BORROW_RECORDS : "muon_sach"
-    BOOKS ||--o{ BORROW_RECORDS : "duoc_muon"
-    BOOK_LOTS ||--o{ BORROW_RECORDS : "xuat_theo_lo"
+ERD chuẩn (PlantUML) nằm tại:
+- `/home/atin/ntiendung/PTTK/docs/ERD_LIBRARY_MANAGEMENT.puml`
 
-    BOOK_CATEGORIES {
-        TEXT ma_danh_muc PK
-        TEXT ten_danh_muc UK
-        TEXT mo_ta
-        TEXT vi_tri_ke
-        INT dang_su_dung
-    }
+```puml
+@startuml
+hide circle
+left to right direction
+skinparam monochrome true
+skinparam shadowing false
+skinparam linetype ortho
+skinparam roundcorner 6
+skinparam defaultFontName Arial
+skinparam dpi 150
 
-    BOOKS {
-        TEXT ma_sach PK
-        TEXT ten_sach
-        TEXT tac_gia
-        TEXT ma_danh_muc FK
-        TEXT chu_de
-        INT nam_xuat_ban
-        TEXT nha_xuat_ban
-        TEXT uri
-        TEXT isbn
-        TEXT bo_suu_tap
-        TEXT anh_bia
-        TEXT vi_tri_kho
-        TEXT nha_cung_cap
-        TEXT trang_thai
-    }
+entity "BOOK_CATEGORIES" as BOOK_CATEGORIES {
+  * ma_danh_muc : INT <<PK>>
+  --
+  ten_danh_muc : TEXT <<UK>>
+  mo_ta : TEXT
+  vi_tri_ke : TEXT
+  dang_su_dung : INT
+}
 
-    BOOK_LOTS {
-        TEXT ma_lo PK
-        TEXT ma_sach FK
-        DATE ngay_nhap
-        INT so_luong_nhap
-        INT so_luong_con
-        TEXT tinh_trang
-        TEXT nha_cung_cap
-        TEXT ghi_chu
-    }
+entity "BOOKS" as BOOKS {
+  * ma_sach : INT <<PK>>
+  --
+  ma_danh_muc : INT <<FK>>
+  ten_sach : TEXT
+  tac_gia : TEXT
+  chu_de : TEXT
+  nam_xuat_ban : INT
+  nha_xuat_ban : TEXT
+  uri : TEXT
+  isbn : TEXT
+  bo_suu_tap : TEXT
+  anh_bia : TEXT
+  vi_tri_kho : TEXT
+  nha_cung_cap : TEXT
+  trang_thai : TEXT
+}
 
-    READERS {
-        TEXT ma_doc_gia PK
-        TEXT ho_ten
-        TEXT email
-        TEXT sdt
-        TEXT dia_chi
-        DATE ngay_dang_ky
-    }
+entity "BOOK_LOTS" as BOOK_LOTS {
+  * ma_lo : INT <<PK>>
+  --
+  ma_sach : INT <<FK>>
+  ngay_nhap : TEXT
+  so_luong_nhap : INT
+  so_luong_con : INT
+  tinh_trang : TEXT
+  nha_cung_cap : TEXT
+  ghi_chu : TEXT
+}
 
-    APP_USERS {
-        TEXT ma_tk PK
-        TEXT username UK
-        TEXT password
-        TEXT ho_ten
-        TEXT email
-        TEXT sdt
-        TEXT role
-        INT is_active
-        DATE ngay_tao
-    }
+entity "READERS" as READERS {
+  * ma_doc_gia : INT <<PK>>
+  --
+  ho_ten : TEXT
+  email : TEXT
+  sdt : TEXT
+  dia_chi : TEXT
+  ngay_dang_ky : TEXT
+}
 
-    BORROW_RECORDS {
-        TEXT ma_muon PK
-        TEXT ma_doc_gia FK
-        TEXT ten_doc_gia
-        TEXT ma_sach FK
-        TEXT ma_lo FK
-        TEXT ten_sach
-        INT so_luong
-        DATE ngay_muon
-        DATE ngay_hen_tra
-        DATE ngay_tra_thuc
-        TEXT trang_thai
-        REAL tien_phat
-    }
+entity "APP_USERS" as APP_USERS {
+  * ma_tk : INT <<PK>>
+  --
+  username : TEXT <<UK>>
+  password : TEXT
+  ho_ten : TEXT
+  email : TEXT
+  sdt : TEXT
+  role : TEXT
+  is_active : INT
+  ngay_tao : TEXT
+}
+
+entity "BORROW_RECORDS" as BORROW_RECORDS {
+  * ma_muon : INT <<PK>>
+  --
+  ma_doc_gia : INT <<FK>>
+  ma_sach : INT <<FK>>
+  ma_lo : INT <<FK>>
+  ten_doc_gia : TEXT
+  ten_sach : TEXT
+  so_luong : INT
+  ngay_muon : TEXT
+  ngay_hen_tra : TEXT
+  ngay_tra_thuc : TEXT
+  trang_thai : TEXT
+  tien_phat : REAL
+}
+
+BOOK_CATEGORIES ||..o{ BOOKS
+BOOKS ||..o{ BOOK_LOTS
+READERS ||..o{ BORROW_RECORDS
+BOOKS ||..o{ BORROW_RECORDS
+BOOK_LOTS ||..o{ BORROW_RECORDS
+
+@enduml
 ```
-
-## Ghi chú
-- `APP_USERS` độc lập với `READERS` trong thiết kế hiện tại (chưa gắn FK trực tiếp).
-- `BORROW_RECORDS.ten_doc_gia` và `BORROW_RECORDS.ten_sach` là dữ liệu snapshot lịch sử.
-- Quan hệ cốt lõi cho nghiệp vụ lô sách là `BOOKS -> BOOK_LOTS -> BORROW_RECORDS`.
