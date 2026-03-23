@@ -199,18 +199,10 @@ namespace LibraryManagement.Forms
                 _ => new LibrarianForm()
             };
 
+            mainForm.FormClosed += MainForm_FormClosed;
+
             Hide();
-            using (mainForm)
-            {
-                mainForm.ShowDialog(this);
-            }
-
-            if (IsDisposed) return;
-
-            ResetLoginState();
-            Show();
-            BringToFront();
-            Activate();
+            mainForm.Show();
         }
 
         private void ShowError(string message)
@@ -226,6 +218,26 @@ namespace LibraryManagement.Forms
             txtUsername.Text = "";
             lblError.Visible = false;
             WindowState = FormWindowState.Normal;
+        }
+
+        private void MainForm_FormClosed(object? sender, FormClosedEventArgs e)
+        {
+            if (sender is Form mainForm)
+                mainForm.FormClosed -= MainForm_FormClosed;
+
+            if (IsDisposed || !IsHandleCreated) return;
+
+            BeginInvoke(new Action(() =>
+            {
+                if (IsDisposed || !IsHandleCreated) return;
+
+                ResetLoginState();
+                Show();
+                BringToFront();
+                Activate();
+                Invalidate(true);
+                Update();
+            }));
         }
     }
 }
