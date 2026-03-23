@@ -26,15 +26,19 @@ namespace LibraryManagement.Controls
             set
             {
                 _isPassword = value;
-                _textBox.UseSystemPasswordChar = value;
+                if (_textBox != null)
+                    _textBox.UseSystemPasswordChar = value;
             }
         }
 
         public override string Text
         {
-            get => _showPlaceholder ? "" : _textBox.Text;
+            get => _textBox == null || _showPlaceholder ? "" : _textBox.Text;
             set
             {
+                if (_textBox == null)
+                    return;
+
                 _textBox.Text = value;
                 _showPlaceholder = string.IsNullOrEmpty(value);
                 UpdatePlaceholder();
@@ -100,12 +104,18 @@ namespace LibraryManagement.Controls
         protected override void OnResize(EventArgs e)
         {
             base.OnResize(e);
+            if (_textBox == null)
+                return;
+
             _textBox.Width = Width - 32;
             _textBox.Location = new Point(16, (Height - _textBox.Height) / 2);
         }
 
         private void UpdatePlaceholder()
         {
+            if (_textBox == null)
+                return;
+
             if (_showPlaceholder && !_isFocused)
             {
                 _textBox.UseSystemPasswordChar = false;
