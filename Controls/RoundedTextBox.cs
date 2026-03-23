@@ -31,7 +31,7 @@ namespace LibraryManagement.Controls
             }
         }
 
-        public override string Text
+        public override string? Text
         {
             get => _textBox == null || _showPlaceholder ? "" : _textBox.Text;
             set
@@ -39,7 +39,7 @@ namespace LibraryManagement.Controls
                 if (_textBox == null)
                     return;
 
-                _textBox.Text = value;
+                _textBox.Text = value ?? "";
                 _showPlaceholder = string.IsNullOrEmpty(value);
                 UpdatePlaceholder();
             }

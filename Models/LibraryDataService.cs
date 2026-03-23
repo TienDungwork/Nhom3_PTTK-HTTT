@@ -83,6 +83,7 @@ namespace LibraryManagement.Models
                     c.MaQuyenSach.Contains(kw, StringComparison.OrdinalIgnoreCase) ||
                     c.MaSach.Contains(kw, StringComparison.OrdinalIgnoreCase) ||
                     GetBookName(c.MaSach).Contains(kw, StringComparison.OrdinalIgnoreCase) ||
+                    GetBookCategoryName(c.MaSach).Contains(kw, StringComparison.OrdinalIgnoreCase) ||
                     c.NhaCungCap.Contains(kw, StringComparison.OrdinalIgnoreCase) ||
                     c.TrangThai.Contains(kw, StringComparison.OrdinalIgnoreCase));
             }
@@ -93,6 +94,13 @@ namespace LibraryManagement.Models
         public static string GetBookName(string maSach)
         {
             return SampleData.Books.FirstOrDefault(b => b.MaSach == maSach)?.TenSach ?? "";
+        }
+
+        public static string GetBookCategoryName(string maSach)
+        {
+            var book = SampleData.Books.FirstOrDefault(b => b.MaSach == maSach);
+            if (book == null) return "";
+            return GetCategoryName(book.MaDanhMuc, book.TheLoai);
         }
 
         public static void NormalizeData()

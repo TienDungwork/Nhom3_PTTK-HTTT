@@ -11,15 +11,18 @@ namespace LibraryManagement.Forms.Panels
 {
     public class BookCopyManagePanel : UserControl
     {
-        private TextBox txtMaQuyen = null!, txtNhaCungCap = null!, txtSoLuong = null!, txtGhiChu = null!, txtSearch = null!;
+        private const int HorizontalMargin = 32;
+        private TextBox txtMaQuyen = null!, txtDanhMuc = null!, txtNhaCungCap = null!, txtSoLuong = null!, txtGhiChu = null!, txtSearch = null!;
         private ComboBox cboSach = null!, cboTrangThai = null!;
         private DateTimePicker dtpNgayNhap = null!;
         private DataGridView dgvCopies = null!;
+        private Panel card = null!;
 
         public BookCopyManagePanel()
         {
             Dock = DockStyle.Fill;
             BackColor = ThemeColors.Background;
+            AutoScroll = true;
 
             Controls.Add(new Label
             {
@@ -40,12 +43,12 @@ namespace LibraryManagement.Forms.Panels
                 BackColor = Color.Transparent
             });
 
-            var card = new Panel
+            card = new Panel
             {
-                Location = new Point(32, 92),
-                Size = new Size(1040, 220),
+                Location = new Point(HorizontalMargin, 92),
+                Size = new Size(960, 220),
                 BackColor = Color.White,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+                Anchor = AnchorStyles.Top | AnchorStyles.Left
             };
             card.Paint += (s, e) =>
             {
@@ -57,12 +60,15 @@ namespace LibraryManagement.Forms.Panels
 
             AddInput(card, "Mã quyển sách", 16, 12, 150, out txtMaQuyen);
             AddBookCombo(card, "Đầu sách", 182, 12, 270, out cboSach);
-            AddDateInput(card, "Ngày nhập", 468, 12, 150, out dtpNgayNhap);
-            AddComboInput(card, "Trạng thái", 634, 12, 140, out cboTrangThai, new[] { "Có sẵn", "Đang mượn", "Hỏng", "Mất", "Bảo trì" });
-            AddInput(card, "Nhà cung cấp", 790, 12, 216, out txtNhaCungCap);
+            AddInput(card, "Danh mục", 468, 12, 170, out txtDanhMuc);
+            txtDanhMuc.ReadOnly = true;
+            txtDanhMuc.BackColor = Color.FromArgb(248, 250, 252);
+            AddDateInput(card, "Ngày nhập", 654, 12, 130, out dtpNgayNhap);
+            AddComboInput(card, "Trạng thái", 800, 12, 120, out cboTrangThai, new[] { "Có sẵn", "Đang mượn", "Hỏng", "Mất", "Bảo trì" });
 
             AddInput(card, "Số lượng", 16, 74, 120, out txtSoLuong);
-            AddInput(card, "Ghi chú", 152, 74, 854, out txtGhiChu);
+            AddInput(card, "Nhà cung cấp", 152, 74, 220, out txtNhaCungCap);
+            AddInput(card, "Ghi chú", 388, 74, 618, out txtGhiChu);
 
             var btnThem = new RoundedButton { Text = "Thêm sách", Size = new Size(110, 40), Location = new Point(16, 148), ButtonColor = ThemeColors.Success, Font = ThemeColors.ButtonFont };
             btnThem.Click += (_, _) => SaveCopy(false);
@@ -82,11 +88,11 @@ namespace LibraryManagement.Forms.Panels
 
             card.Controls.Add(new Label
             {
-                Text = "Tìm kiếm quyển / đầu sách",
+                Text = "Tìm kiếm quyển / đầu sách / danh mục",
                 Font = ThemeColors.SmallFont,
                 ForeColor = ThemeColors.TextSecondary,
                 Location = new Point(500, 150),
-                Size = new Size(190, 16),
+                Size = new Size(250, 16),
                 BackColor = Color.Transparent
             });
             txtSearch = new TextBox { Location = new Point(500, 168), Size = new Size(260, 28), Font = ThemeColors.BodyFont, BorderStyle = BorderStyle.FixedSingle };
@@ -97,25 +103,42 @@ namespace LibraryManagement.Forms.Panels
 
             dgvCopies = new DataGridView
             {
-                Location = new Point(32, 324),
-                Size = new Size(1040, 332),
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom
+                Location = new Point(HorizontalMargin, 324),
+                Size = new Size(960, 320),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left
             };
             dgvCopies.Columns.Add("MaQuyenSach", "Mã quyển");
             dgvCopies.Columns.Add("MaSach", "Mã đầu sách");
             dgvCopies.Columns.Add("TenSach", "Tên đầu sách");
+            dgvCopies.Columns.Add("DanhMuc", "Danh mục");
             dgvCopies.Columns.Add("NgayNhap", "Ngày nhập");
             dgvCopies.Columns.Add("SoLuong", "Số lượng");
             dgvCopies.Columns.Add("TrangThai", "Trạng thái");
             dgvCopies.Columns.Add("NCC", "Nhà cung cấp");
             dgvCopies.Columns.Add("GhiChu", "Ghi chú");
             ModernDataGridView.ApplyStyle(dgvCopies);
+            dgvCopies.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvCopies.CellClick += DgvCopies_CellClick;
             Controls.Add(dgvCopies);
 
             ReloadBooks();
             ClearForm();
             LoadCopies();
+            cboSach.SelectedIndexChanged += (_, _) => UpdateSelectedCategory();
+
+            Resize += (_, _) => ApplyResponsiveLayout();
+            ApplyResponsiveLayout();
+        }
+
+        private void ApplyResponsiveLayout()
+        {
+            int availableWidth = Math.Max(760, ClientSize.Width - (HorizontalMargin * 2));
+
+            card.Width = availableWidth;
+            dgvCopies.Width = availableWidth;
+
+            int availableHeight = Math.Max(220, ClientSize.Height - dgvCopies.Top - 16);
+            dgvCopies.Height = availableHeight;
         }
 
         private void AddInput(Panel parent, string label, int x, int y, int width, out TextBox box)
@@ -177,6 +200,13 @@ namespace LibraryManagement.Forms.Panels
                 cboSach.SelectedValue = selected;
             if (cboSach.SelectedIndex < 0 && cboSach.Items.Count > 0)
                 cboSach.SelectedIndex = 0;
+            UpdateSelectedCategory();
+        }
+
+        private void UpdateSelectedCategory()
+        {
+            string maSach = cboSach.SelectedValue?.ToString() ?? "";
+            txtDanhMuc.Text = string.IsNullOrWhiteSpace(maSach) ? "" : LibraryDataService.GetBookCategoryName(maSach);
         }
 
         private void LoadCopies(string keyword = "")
@@ -189,6 +219,7 @@ namespace LibraryManagement.Forms.Panels
                     copy.MaQuyenSach,
                     copy.MaSach,
                     LibraryDataService.GetBookName(copy.MaSach),
+                    LibraryDataService.GetBookCategoryName(copy.MaSach),
                     copy.NgayNhap.ToString("dd/MM/yyyy"),
                     copy.SoLuong,
                     copy.TrangThai,
@@ -206,6 +237,7 @@ namespace LibraryManagement.Forms.Panels
 
             txtMaQuyen.Text = copy.MaQuyenSach;
             cboSach.SelectedValue = copy.MaSach;
+            txtDanhMuc.Text = LibraryDataService.GetBookCategoryName(copy.MaSach);
             dtpNgayNhap.Value = copy.NgayNhap;
             cboTrangThai.SelectedItem = copy.TrangThai;
             txtNhaCungCap.Text = copy.NhaCungCap;
