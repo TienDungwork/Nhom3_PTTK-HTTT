@@ -24,7 +24,14 @@ namespace LibraryManagement.Forms
             BackColor = ThemeColors.Background;
             Font = ThemeColors.BodyFont;
 
-            // --- Main card panel ---
+            BuildLoginUi();
+        }
+
+        private void BuildLoginUi()
+        {
+            SuspendLayout();
+            Controls.Clear();
+
             var card = new Panel
             {
                 Size = new Size(400, 480),
@@ -45,8 +52,7 @@ namespace LibraryManagement.Forms
             };
             Controls.Add(card);
 
-            // --- Logo icon ---
-            var lblLogo = new Label
+            card.Controls.Add(new Label
             {
                 Text = "\uE736",
                 Font = new Font("Segoe MDL2 Assets", 36),
@@ -55,11 +61,9 @@ namespace LibraryManagement.Forms
                 Size = new Size(80, 80),
                 Location = new Point(160, 24),
                 BackColor = Color.Transparent
-            };
-            card.Controls.Add(lblLogo);
+            });
 
-            // --- Title ---
-            var lblTitle = new Label
+            card.Controls.Add(new Label
             {
                 Text = "ĐĂNG NHẬP HỆ THỐNG",
                 Font = new Font("Segoe UI Semibold", 16),
@@ -68,10 +72,9 @@ namespace LibraryManagement.Forms
                 Size = new Size(360, 32),
                 Location = new Point(20, 108),
                 BackColor = Color.Transparent
-            };
-            card.Controls.Add(lblTitle);
+            });
 
-            var lblSubtitle = new Label
+            card.Controls.Add(new Label
             {
                 Text = "Thư viện Trường Đại học Thủy Lợi",
                 Font = ThemeColors.BodyFont,
@@ -80,11 +83,9 @@ namespace LibraryManagement.Forms
                 Size = new Size(360, 22),
                 Location = new Point(20, 142),
                 BackColor = Color.Transparent
-            };
-            card.Controls.Add(lblSubtitle);
+            });
 
-            // --- Mã người dùng ---
-            var lblUser = new Label
+            card.Controls.Add(new Label
             {
                 Text = "Mã người dùng",
                 Font = ThemeColors.BodyFont,
@@ -92,8 +93,7 @@ namespace LibraryManagement.Forms
                 Location = new Point(40, 186),
                 Size = new Size(320, 20),
                 BackColor = Color.Transparent
-            };
-            card.Controls.Add(lblUser);
+            });
 
             txtUsername = new RoundedTextBox
             {
@@ -103,8 +103,7 @@ namespace LibraryManagement.Forms
             };
             card.Controls.Add(txtUsername);
 
-            // --- Mật khẩu ---
-            var lblPass = new Label
+            card.Controls.Add(new Label
             {
                 Text = "Mật khẩu",
                 Font = ThemeColors.BodyFont,
@@ -112,8 +111,7 @@ namespace LibraryManagement.Forms
                 Location = new Point(40, 264),
                 Size = new Size(320, 20),
                 BackColor = Color.Transparent
-            };
-            card.Controls.Add(lblPass);
+            });
 
             txtPassword = new RoundedTextBox
             {
@@ -124,7 +122,6 @@ namespace LibraryManagement.Forms
             };
             card.Controls.Add(txtPassword);
 
-            // --- Error label ---
             lblError = new Label
             {
                 Text = "",
@@ -138,7 +135,6 @@ namespace LibraryManagement.Forms
             };
             card.Controls.Add(lblError);
 
-            // --- Login button ---
             var btnLogin = new RoundedButton
             {
                 Text = "Đăng nhập",
@@ -152,8 +148,7 @@ namespace LibraryManagement.Forms
             btnLogin.Click += BtnLogin_Click;
             card.Controls.Add(btnLogin);
 
-            // --- Hint ---
-            var lblHint = new Label
+            card.Controls.Add(new Label
             {
                 Text = "admin / admin123  |  thuthu / thuthu123  |  docgia / docgia123",
                 Font = ThemeColors.SmallFont,
@@ -162,12 +157,18 @@ namespace LibraryManagement.Forms
                 Location = new Point(20, 434),
                 Size = new Size(360, 20),
                 BackColor = Color.Transparent
-            };
-            card.Controls.Add(lblHint);
+            });
 
-            // Enter key
-            txtPassword.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) BtnLogin_Click(s, e); };
-            txtUsername.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) txtPassword.Focus(); };
+            txtPassword.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode == Keys.Enter) BtnLogin_Click(s, e);
+            };
+            txtUsername.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode == Keys.Enter) txtPassword.Focus();
+            };
+
+            ResumeLayout(true);
         }
 
         private void BtnLogin_Click(object? sender, EventArgs e)
@@ -175,7 +176,6 @@ namespace LibraryManagement.Forms
             string username = txtUsername.Text.Trim();
             string password = txtPassword.Text.Trim();
 
-            // Validation
             if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
             {
                 ShowError("Vui lòng nhập đầy đủ thông tin!");
@@ -207,6 +207,7 @@ namespace LibraryManagement.Forms
 
             if (IsDisposed) return;
 
+            BuildLoginUi();
             ResetLoginState();
             Show();
             BringToFront();
