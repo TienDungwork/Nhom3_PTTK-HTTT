@@ -96,7 +96,8 @@ namespace LibraryManagement.Forms.Panels
             dgvBooks.Rows.Clear();
             foreach (var b in SampleData.Books)
             {
-                dgvBooks.Rows.Add(b.MaSach, b.TenSach, b.TacGia, b.TheLoai, b.SoLuongHienCo, b.TrangThai);
+                LibraryDataService.SyncBookStatus(b);
+                dgvBooks.Rows.Add(b.MaSach, b.TenSach, b.TacGia, LibraryDataService.GetCategoryName(b.MaDanhMuc, b.TheLoai), b.SoLuongHienCo, b.TrangThai);
             }
         }
 
@@ -148,23 +149,15 @@ namespace LibraryManagement.Forms.Panels
             }
 
             var cu = UserStore.CurrentUser;
-            var record = new BorrowRecord
+            var result = LibraryDataService.BorrowBook(maSach, cu?.Username ?? "", cu?.HoTen ?? "", dtpNgayMuon.Value, soNgay);
+            if (!result.Success)
             {
-                MaMuon = "M" + (SampleData.BorrowRecords.Count + 1).ToString("D3"),
-                MaDocGia = cu?.Username ?? "",
-                TenDocGia = cu?.HoTen ?? "",
-                MaSach = maSach,
-                TenSach = tenSach,
-                NgayMuon = dtpNgayMuon.Value,
-                NgayHenTra = dtpNgayMuon.Value.AddDays(soNgay),
-                TrangThai = "Đang mượn"
-            };
-            SampleData.BorrowRecords.Add(record);
+                MessageBox.Show(result.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
-            var book = SampleData.Books.FirstOrDefault(b => b.MaSach == maSach);
-            if (book != null) book.SoLuongDangMuon++;
-
-            MessageBox.Show($"Mượn sách \"{tenSach}\" thành công!\nHạn trả: {record.NgayHenTra:dd/MM/yyyy}", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            var record = SampleData.BorrowRecords.Last();
+            MessageBox.Show($"{result.Message}\nHạn trả: {record.NgayHenTra:dd/MM/yyyy}", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
             LoadBooks();
         }
 
@@ -179,20 +172,14 @@ namespace LibraryManagement.Forms.Panels
             var row = dgvBooks.SelectedRows[0];
             string maSach = row.Cells["MaSach"].Value?.ToString() ?? "";
             var cu = UserStore.CurrentUser;
-            var record = SampleData.BorrowRecords.FirstOrDefault(r => r.MaSach == maSach && r.MaDocGia == (cu?.Username ?? "") && r.TrangThai == "Đang mượn");
-
-            if (record == null)
+            var result = LibraryDataService.ReturnBook(maSach, cu?.Username ?? "", DateTime.Now);
+            if (!result.Success)
             {
-                MessageBox.Show("Không tìm thấy phiếu mượn cho sách này!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(result.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            record.NgayTraThuc = DateTime.Now;
-            record.TrangThai = "Đã trả";
-            var book = SampleData.Books.FirstOrDefault(b => b.MaSach == maSach);
-            if (book != null && book.SoLuongDangMuon > 0) book.SoLuongDangMuon--;
-
-            MessageBox.Show($"Trả sách \"{record.TenSach}\" thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show(result.Message, "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
             LoadBooks();
         }
     }

@@ -49,7 +49,7 @@ namespace LibraryManagement.Forms.Dialogs
             y = 230;
             AddField("URI:", book.URI, 20, ref y);
             AddField("Bộ sưu tập:", book.BoSuuTap, 20, ref y);
-            AddField("Thể loại:", book.TheLoai, 20, ref y);
+            AddField("Danh mục:", LibraryDataService.GetCategoryName(book.MaDanhMuc, book.TheLoai), 20, ref y);
             AddField("Mã sách:", book.MaSach, 20, ref y);
             AddField("Số lượng hiện có:", book.SoLuongHienCo.ToString() + " / " + book.SoLuong.ToString(), 20, ref y);
             AddField("Vị trí kho:", book.ViTriKho, 20, ref y);

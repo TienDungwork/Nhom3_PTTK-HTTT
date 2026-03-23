@@ -26,7 +26,7 @@ namespace LibraryManagement.Forms.Panels
 
             // Title
             Controls.Add(new Label { Text = "TÌM KIẾM SÁCH", Font = ThemeColors.HeaderFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(32, 20), Size = new Size(400, 40), BackColor = Color.Transparent });
-            Controls.Add(new Label { Text = "Tra cứu sách theo tác giả, nhan đề, chủ đề hoặc mã sách", Font = ThemeColors.BodyFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(32, 60), Size = new Size(600, 22), BackColor = Color.Transparent });
+            Controls.Add(new Label { Text = "Tra cứu đầu sách theo tác giả, nhan đề, chủ đề hoặc mã sách", Font = ThemeColors.BodyFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(32, 60), Size = new Size(600, 22), BackColor = Color.Transparent });
 
             // Search card
             var searchCard = new Panel { Location = new Point(32, 96), Size = new Size(900, 160), BackColor = Color.White, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
@@ -71,6 +71,7 @@ namespace LibraryManagement.Forms.Panels
             dgvResults.Columns.Add("MaSach", "Mã sách");
             dgvResults.Columns.Add("TenSach", "Nhan đề");
             dgvResults.Columns.Add("TacGia", "Tác giả");
+            dgvResults.Columns.Add("DanhMuc", "Danh mục");
             dgvResults.Columns.Add("ChuDe", "Chủ đề");
             dgvResults.Columns.Add("NXB", "NXB");
             dgvResults.Columns.Add("SoLuong", "Còn lại");
@@ -105,7 +106,7 @@ namespace LibraryManagement.Forms.Panels
 
             foreach (var b in list)
             {
-                dgvResults.Rows.Add(b.MaSach, b.TenSach, b.TacGia, b.ChuDe, b.NhaXuatBan, b.SoLuongHienCo, b.TrangThai);
+                dgvResults.Rows.Add(b.MaSach, b.TenSach, b.TacGia, LibraryDataService.GetCategoryName(b.MaDanhMuc, b.TheLoai), b.ChuDe, b.NhaXuatBan, b.SoLuongHienCo, b.TrangThai);
             }
         }
 

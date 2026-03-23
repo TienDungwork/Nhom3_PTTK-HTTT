@@ -5,6 +5,7 @@ namespace LibraryManagement.Models
         public string MaSach { get; set; } = "";
         public string TenSach { get; set; } = "";
         public string TacGia { get; set; } = "";
+        public string MaDanhMuc { get; set; } = "";
         public string ChuDe { get; set; } = "";
         public int NamXuatBan { get; set; } = 2024;
         public string NhaXuatBan { get; set; } = "";

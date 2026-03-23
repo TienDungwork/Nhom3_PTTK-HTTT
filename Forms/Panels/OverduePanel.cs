@@ -94,7 +94,7 @@ namespace LibraryManagement.Forms.Panels
 
             foreach (var r in overdues.OrderByDescending(r => r.SoNgayQuaHan))
             {
-                decimal tienPhat = r.SoNgayQuaHan * 5000m; // 5,000 VNĐ / ngày
+                decimal tienPhat = LibraryDataService.CalculateLateFee(r);
                 int rowIdx = dgv.Rows.Add(r.MaMuon, r.MaDocGia, r.TenDocGia, r.TenSach,
                     r.NgayMuon.ToString("dd/MM/yyyy"), r.NgayHenTra.ToString("dd/MM/yyyy"),
                     r.SoNgayQuaHan.ToString() + " ngày", $"{tienPhat:N0} VNĐ");
@@ -123,7 +123,7 @@ namespace LibraryManagement.Forms.Panels
             {
                 if (MessageBox.Show($"Xác nhận thu tiền phạt {tienPhat} cho phiếu {maMuon}?", "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
-                    record.TienPhat = record.SoNgayQuaHan * 5000m;
+                    record.TienPhat = LibraryDataService.CalculateLateFee(record);
                     MessageBox.Show("Đã xác nhận thu tiền phạt!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
@@ -140,12 +140,7 @@ namespace LibraryManagement.Forms.Panels
             var record = SampleData.BorrowRecords.FirstOrDefault(r => r.MaMuon == maMuon);
             if (record != null)
             {
-                record.NgayTraThuc = DateTime.Now;
-                record.TrangThai = "Đã trả";
-                record.TienPhat = record.SoNgayQuaHan * 5000m;
-                var book = SampleData.Books.FirstOrDefault(b => b.MaSach == record.MaSach);
-                if (book != null && book.SoLuongDangMuon > 0) book.SoLuongDangMuon--;
-
+                LibraryDataService.CompleteReturn(record, DateTime.Now);
                 MessageBox.Show($"Đã xác nhận trả sách \"{record.TenSach}\"!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 ApplyFilter();
             }

@@ -36,6 +36,7 @@ namespace LibraryManagement.Forms.Panels
 
             foreach (var b in SampleData.Books)
             {
+                LibraryDataService.SyncBookStatus(b);
                 dgv1.Rows.Add(b.MaSach, b.TenSach, b.TacGia, b.SoLuongDangMuon, b.SoLuongMatHong, b.SoLuongHienCo, b.ViTriKho, b.NhaCungCap);
             }
             Controls.Add(dgv1);
@@ -61,7 +62,7 @@ namespace LibraryManagement.Forms.Panels
             {
                 var book = SampleData.Books.FirstOrDefault(b => b.MaSach == bc.MaSach);
                 if (book != null)
-                    dgv2.Rows.Add(book.TenSach, book.TacGia, book.TheLoai, bc.Count, bc.ActiveCount);
+                    dgv2.Rows.Add(book.TenSach, book.TacGia, LibraryDataService.GetCategoryName(book.MaDanhMuc, book.TheLoai), bc.Count, bc.ActiveCount);
             }
             Controls.Add(dgv2);
         }

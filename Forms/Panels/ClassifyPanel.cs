@@ -20,8 +20,8 @@ namespace LibraryManagement.Forms.Panels
             Dock = DockStyle.Fill;
             BackColor = ThemeColors.Background;
 
-            Controls.Add(new Label { Text = "PHÂN LOẠI SÁCH", Font = ThemeColors.HeaderFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(32, 20), Size = new Size(400, 40), BackColor = Color.Transparent });
-            Controls.Add(new Label { Text = "Lọc sách theo thể loại và tác giả", Font = ThemeColors.BodyFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(32, 60), Size = new Size(500, 22), BackColor = Color.Transparent });
+            Controls.Add(new Label { Text = "TRA CỨU VÀ PHÂN LOẠI ĐẦU SÁCH", Font = ThemeColors.HeaderFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(32, 20), Size = new Size(520, 40), BackColor = Color.Transparent });
+            Controls.Add(new Label { Text = "Lọc đầu sách theo danh mục và tác giả dựa trên danh mục nghiệp vụ đã khai báo", Font = ThemeColors.BodyFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(32, 60), Size = new Size(700, 22), BackColor = Color.Transparent });
 
             // Filter card
             var filterCard = new Panel { Location = new Point(32, 92), Size = new Size(920, 80), BackColor = Color.White, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
@@ -74,13 +74,13 @@ namespace LibraryManagement.Forms.Panels
 
             string theLoai = cboTheLoai.SelectedItem?.ToString() ?? "Tất cả";
             if (theLoai != "Tất cả")
-                results = results.Where(b => b.TheLoai == theLoai);
+                results = results.Where(b => string.Equals(LibraryDataService.GetCategoryName(b.MaDanhMuc, b.TheLoai), theLoai, StringComparison.OrdinalIgnoreCase));
 
             if (!string.IsNullOrWhiteSpace(txtTacGia.Text))
                 results = results.Where(b => b.TacGia.Contains(txtTacGia.Text.Trim(), StringComparison.OrdinalIgnoreCase));
 
             foreach (var b in results)
-                dgvResults.Rows.Add(b.MaSach, b.TenSach, b.TacGia, b.TheLoai, b.ChuDe, b.NamXuatBan, b.SoLuong, b.TrangThai);
+                dgvResults.Rows.Add(b.MaSach, b.TenSach, b.TacGia, LibraryDataService.GetCategoryName(b.MaDanhMuc, b.TheLoai), b.ChuDe, b.NamXuatBan, b.SoLuong, b.TrangThai);
         }
     }
 }

@@ -1,0 +1,214 @@
+using System;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Linq;
+using System.Windows.Forms;
+using LibraryManagement.Controls;
+using LibraryManagement.Helpers;
+using LibraryManagement.Models;
+
+namespace LibraryManagement.Forms.Panels
+{
+    public class BookTitlePanel : UserControl
+    {
+        private TextBox txtMaSach = null!, txtTenSach = null!, txtTacGia = null!, txtChuDe = null!;
+        private TextBox txtNXB = null!, txtISBN = null!, txtURI = null!, txtNamXB = null!, txtSoLuong = null!;
+        private ComboBox cboDanhMuc = null!;
+        private DataGridView dgvBooks = null!;
+
+        public BookTitlePanel()
+        {
+            Dock = DockStyle.Fill;
+            BackColor = ThemeColors.Background;
+
+            Controls.Add(new Label { Text = "QUẢN LÝ ĐẦU SÁCH", Font = ThemeColors.HeaderFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(32, 20), Size = new Size(420, 40), BackColor = Color.Transparent });
+            Controls.Add(new Label { Text = "Quản lý thông tin thư mục của từng đầu sách và gắn với danh mục nghiệp vụ", Font = ThemeColors.BodyFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(32, 60), Size = new Size(700, 22), BackColor = Color.Transparent });
+
+            var inputCard = new Panel { Location = new Point(32, 92), Size = new Size(1040, 220), BackColor = Color.White, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
+            inputCard.Paint += (s, e) =>
+            {
+                using var path = ThemeColors.GetRoundedRect(new Rectangle(0, 0, inputCard.Width - 2, inputCard.Height - 2), 12);
+                using var bg = new SolidBrush(Color.White);
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                e.Graphics.FillPath(bg, path);
+            };
+
+            AddInputField(inputCard, "Mã sách", 16, 12, 120, out txtMaSach);
+            AddInputField(inputCard, "Tên sách", 152, 12, 260, out txtTenSach);
+            AddInputField(inputCard, "Tác giả", 428, 12, 180, out txtTacGia);
+            AddComboField(inputCard, "Danh mục", 624, 12, 170, out cboDanhMuc);
+            AddInputField(inputCard, "Năm XB", 810, 12, 80, out txtNamXB);
+            AddInputField(inputCard, "Số lượng", 906, 12, 100, out txtSoLuong);
+
+            AddInputField(inputCard, "Chủ đề", 16, 74, 220, out txtChuDe);
+            AddInputField(inputCard, "NXB", 252, 74, 180, out txtNXB);
+            AddInputField(inputCard, "ISBN", 448, 74, 180, out txtISBN);
+            AddInputField(inputCard, "URI", 644, 74, 362, out txtURI);
+
+            var btnThem = new RoundedButton { Text = "Thêm", Size = new Size(100, 40), Location = new Point(16, 148), ButtonColor = ThemeColors.Success, Font = ThemeColors.ButtonFont };
+            btnThem.Click += (_, _) => SaveBook(false);
+            inputCard.Controls.Add(btnThem);
+
+            var btnSua = new RoundedButton { Text = "Cập nhật", Size = new Size(110, 40), Location = new Point(126, 148), ButtonColor = ThemeColors.Warning, Font = ThemeColors.ButtonFont };
+            btnSua.Click += (_, _) => SaveBook(true);
+            inputCard.Controls.Add(btnSua);
+
+            var btnXoa = new RoundedButton { Text = "Xóa", Size = new Size(100, 40), Location = new Point(246, 148), ButtonColor = ThemeColors.Danger, Font = ThemeColors.ButtonFont };
+            btnXoa.Click += BtnXoa_Click;
+            inputCard.Controls.Add(btnXoa);
+
+            var btnClear = new RoundedButton { Text = "Xóa form", Size = new Size(100, 40), Location = new Point(356, 148), ButtonColor = ThemeColors.TextSecondary, Font = ThemeColors.ButtonFont };
+            btnClear.Click += (_, _) => ClearForm();
+            inputCard.Controls.Add(btnClear);
+
+            Controls.Add(inputCard);
+
+            dgvBooks = new DataGridView { Location = new Point(32, 324), Size = new Size(1040, 332), Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom };
+            dgvBooks.Columns.Add("MaSach", "Mã sách");
+            dgvBooks.Columns.Add("TenSach", "Tên sách");
+            dgvBooks.Columns.Add("TacGia", "Tác giả");
+            dgvBooks.Columns.Add("DanhMuc", "Danh mục");
+            dgvBooks.Columns.Add("ChuDe", "Chủ đề");
+            dgvBooks.Columns.Add("NamXB", "Năm XB");
+            dgvBooks.Columns.Add("SoLuong", "Tổng số lượng");
+            dgvBooks.Columns.Add("DangMuon", "Đang mượn");
+            dgvBooks.Columns.Add("ConLai", "Hiện có");
+            ModernDataGridView.ApplyStyle(dgvBooks);
+            dgvBooks.CellClick += DgvBooks_CellClick;
+            Controls.Add(dgvBooks);
+
+            ReloadCategoryOptions();
+            LoadBooks();
+        }
+
+        private void AddInputField(Panel parent, string label, int x, int y, int width, out TextBox textBox)
+        {
+            parent.Controls.Add(new Label { Text = label, Font = ThemeColors.SmallFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(x, y), Size = new Size(width, 16), BackColor = Color.Transparent });
+            textBox = new TextBox { Location = new Point(x, y + 18), Size = new Size(width, 28), Font = ThemeColors.BodyFont, BorderStyle = BorderStyle.FixedSingle };
+            parent.Controls.Add(textBox);
+        }
+
+        private void AddComboField(Panel parent, string label, int x, int y, int width, out ComboBox comboBox)
+        {
+            parent.Controls.Add(new Label { Text = label, Font = ThemeColors.SmallFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(x, y), Size = new Size(width, 16), BackColor = Color.Transparent });
+            comboBox = new ComboBox
+            {
+                Location = new Point(x, y + 18),
+                Size = new Size(width, 28),
+                Font = ThemeColors.BodyFont,
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+            parent.Controls.Add(comboBox);
+        }
+
+        private void ReloadCategoryOptions()
+        {
+            var selected = cboDanhMuc.SelectedValue?.ToString();
+            cboDanhMuc.DataSource = LibraryDataService.GetCategories(false).ToList();
+            cboDanhMuc.DisplayMember = "TenDanhMuc";
+            cboDanhMuc.ValueMember = "MaDanhMuc";
+
+            if (!string.IsNullOrWhiteSpace(selected))
+                cboDanhMuc.SelectedValue = selected;
+
+            if (cboDanhMuc.SelectedIndex < 0 && cboDanhMuc.Items.Count > 0)
+                cboDanhMuc.SelectedIndex = 0;
+        }
+
+        private void LoadBooks()
+        {
+            dgvBooks.Rows.Clear();
+            foreach (var b in SampleData.Books.OrderBy(b => b.TenSach))
+            {
+                LibraryDataService.SyncBookCategory(b);
+                LibraryDataService.SyncBookStatus(b);
+                dgvBooks.Rows.Add(b.MaSach, b.TenSach, b.TacGia, b.TheLoai, b.ChuDe, b.NamXuatBan, b.SoLuong, b.SoLuongDangMuon, b.SoLuongHienCo);
+            }
+        }
+
+        private void DgvBooks_CellClick(object? sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0) return;
+            string maSach = dgvBooks.Rows[e.RowIndex].Cells["MaSach"].Value?.ToString() ?? "";
+            var book = SampleData.Books.FirstOrDefault(b => b.MaSach == maSach);
+            if (book == null) return;
+
+            txtMaSach.Text = book.MaSach;
+            txtTenSach.Text = book.TenSach;
+            txtTacGia.Text = book.TacGia;
+            txtChuDe.Text = book.ChuDe;
+            txtNamXB.Text = book.NamXuatBan.ToString();
+            txtNXB.Text = book.NhaXuatBan;
+            txtISBN.Text = book.ISBN;
+            txtURI.Text = book.URI;
+            txtSoLuong.Text = book.SoLuong.ToString();
+            cboDanhMuc.SelectedValue = book.MaDanhMuc;
+        }
+
+        private void SaveBook(bool isEditMode)
+        {
+            int namXb = int.TryParse(txtNamXB.Text, out int nam) ? nam : DateTime.Now.Year;
+            int soLuong = int.TryParse(txtSoLuong.Text, out int qty) ? qty : 0;
+
+            var book = new Book
+            {
+                MaSach = txtMaSach.Text.Trim(),
+                TenSach = txtTenSach.Text.Trim(),
+                TacGia = txtTacGia.Text.Trim(),
+                MaDanhMuc = cboDanhMuc.SelectedValue?.ToString() ?? "",
+                ChuDe = txtChuDe.Text.Trim(),
+                NamXuatBan = namXb,
+                NhaXuatBan = txtNXB.Text.Trim(),
+                ISBN = txtISBN.Text.Trim(),
+                URI = txtURI.Text.Trim(),
+                SoLuong = soLuong
+            };
+
+            var result = LibraryDataService.SaveBook(book, isEditMode);
+            MessageBox.Show(result.Message, result.Success ? "Thành công" : "Lỗi", MessageBoxButtons.OK,
+                result.Success ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
+
+            if (!result.Success) return;
+
+            ReloadCategoryOptions();
+            ClearForm();
+            LoadBooks();
+        }
+
+        private void BtnXoa_Click(object? sender, EventArgs e)
+        {
+            string maSach = txtMaSach.Text.Trim();
+            if (string.IsNullOrWhiteSpace(maSach))
+            {
+                MessageBox.Show("Vui lòng chọn đầu sách cần xóa.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (MessageBox.Show("Bạn có chắc chắn muốn xóa đầu sách này?", "Xác nhận xóa", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
+                return;
+
+            var result = LibraryDataService.DeleteBook(maSach);
+            MessageBox.Show(result.Message, result.Success ? "Thành công" : "Lỗi", MessageBoxButtons.OK,
+                result.Success ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
+
+            if (!result.Success) return;
+
+            ClearForm();
+            LoadBooks();
+        }
+
+        private void ClearForm()
+        {
+            txtMaSach.Clear();
+            txtTenSach.Clear();
+            txtTacGia.Clear();
+            txtChuDe.Clear();
+            txtNamXB.Clear();
+            txtNXB.Clear();
+            txtISBN.Clear();
+            txtURI.Clear();
+            txtSoLuong.Clear();
+            if (cboDanhMuc.Items.Count > 0) cboDanhMuc.SelectedIndex = 0;
+        }
+    }
+}

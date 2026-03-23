@@ -1,9 +1,11 @@
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Linq;
 using System.Windows.Forms;
 using LibraryManagement.Controls;
 using LibraryManagement.Helpers;
+using LibraryManagement.Models;
 
 namespace LibraryManagement.Forms.Dialogs
 {
@@ -213,7 +215,7 @@ namespace LibraryManagement.Forms.Dialogs
             txtSoLuong.Text = book.SoLuong.ToString();
             for (int i = 0; i < cboTheLoai.Items.Count; i++)
             {
-                if (cboTheLoai.Items[i].ToString() == book.TheLoai)
+                if (cboTheLoai.Items[i]?.ToString() == LibraryDataService.GetCategoryName(book.MaDanhMuc, book.TheLoai))
                 {
                     cboTheLoai.SelectedIndex = i;
                     break;
@@ -240,6 +242,8 @@ namespace LibraryManagement.Forms.Dialogs
                 TenSach = txtTenSach.InputText,
                 TacGia = txtTacGia.InputText,
                 ISBN = txtISBN.InputText,
+                MaDanhMuc = Models.SampleData.BookCategories
+                    .FirstOrDefault(c => c.TenDanhMuc == (cboTheLoai.SelectedItem?.ToString() ?? ""))?.MaDanhMuc ?? "",
                 TheLoai = cboTheLoai.SelectedItem?.ToString() ?? "",
                 SoLuong = qty,
                 TrangThai = qty > 0 ? "Có sẵn" : "Hết sách"

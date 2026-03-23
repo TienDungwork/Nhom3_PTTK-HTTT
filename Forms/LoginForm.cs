@@ -199,18 +199,26 @@ namespace LibraryManagement.Forms
                 _ => new LibrarianForm()
             };
 
-            // Hiện lại form đăng nhập TRƯỚC KHI form chính đóng (FormClosing), để app không bị tắt
-            // (nếu chỉ Show() trong FormClosed thì lúc form đóng có thể không còn form nào hiển thị → app thoát)
+            // FormClosing: hiện form đăng nhập trước khi dialog đóng → app không tắt
             mainForm.FormClosing += (s, _) =>
             {
-                UserStore.CurrentUser = null;
-                txtPassword.Text = "";
-                txtUsername.Text = "";
-                lblError.Visible = false;
-                WindowState = FormWindowState.Normal;
                 Show();
                 BringToFront();
                 Activate();
+            };
+            // FormClosed: reset và xóa phiên sau khi dialog đã đóng hẳn (tránh sập khi đăng nhập tài khoản mới)
+            mainForm.FormClosed += (s, _) =>
+            {
+                if (IsDisposed || !IsHandleCreated) return;
+                BeginInvoke(new Action(() =>
+                {
+                    if (IsDisposed || !IsHandleCreated) return;
+                    UserStore.CurrentUser = null;
+                    txtPassword.Text = "";
+                    txtUsername.Text = "";
+                    lblError.Visible = false;
+                    WindowState = FormWindowState.Normal;
+                }));
             };
 
             Hide();

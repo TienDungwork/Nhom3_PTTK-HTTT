@@ -48,8 +48,9 @@ namespace LibraryManagement.Forms
 
             string[][] menuItems = {
                 new[] { "\uE80F", "Trang chủ" },
-                new[] { "\uE736", "Cập nhật danh mục" },
-                new[] { "\uE8C8", "Phân loại sách" },
+                new[] { "\uE736", "Quản lý đầu sách" },
+                new[] { "\uE8C8", "Quản lý danh mục sách" },
+                new[] { "\uE721", "Tra cứu & phân loại" },
                 new[] { "\uE762", "Quản lý mượn trả" },
                 new[] { "\uE7BA", "Quản lý quá hạn" },
                 new[] { "\uE7A8", "Báo cáo thống kê" },
@@ -112,11 +113,12 @@ namespace LibraryManagement.Forms
             UserControl panel = index switch
             {
                 0 => new LibrarianDashboard(),
-                1 => new CatalogPanel(),
-                2 => new ClassifyPanel(),
-                3 => new BorrowManagePanel(),
-                4 => new OverduePanel(),
-                5 => new ReportPanel(),
+                1 => new BookTitlePanel(),
+                2 => new CatalogPanel(),
+                3 => new ClassifyPanel(),
+                4 => new BorrowManagePanel(),
+                5 => new OverduePanel(),
+                6 => new ReportPanel(),
                 _ => new LibrarianDashboard()
             };
             panel.Dock = DockStyle.Fill;
