@@ -11,7 +11,6 @@ namespace LibraryManagement.Forms.Panels
 {
     public class BookTitlePanel : UserControl
     {
-        private const int HorizontalMargin = 32;
         private TextBox txtMaSach = null!, txtTenSach = null!, txtTacGia = null!, txtChuDe = null!;
         private TextBox txtNXB = null!, txtISBN = null!, txtURI = null!, txtNamXB = null!, txtSoLuong = null!;
         private ComboBox cboDanhMuc = null!;
@@ -22,12 +21,11 @@ namespace LibraryManagement.Forms.Panels
         {
             Dock = DockStyle.Fill;
             BackColor = ThemeColors.Background;
-            AutoScroll = true;
 
             Controls.Add(new Label { Text = "QUẢN LÝ ĐẦU SÁCH", Font = ThemeColors.HeaderFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(32, 20), Size = new Size(420, 40), BackColor = Color.Transparent });
             Controls.Add(new Label { Text = "Quản lý thông tin thư mục của từng đầu sách và gắn với danh mục nghiệp vụ", Font = ThemeColors.BodyFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(32, 60), Size = new Size(700, 22), BackColor = Color.Transparent });
 
-            inputCard = new Panel { Location = new Point(HorizontalMargin, 92), Size = new Size(1040, 220), BackColor = Color.White, Anchor = AnchorStyles.Top | AnchorStyles.Left };
+            inputCard = new Panel { Location = new Point(32, 92), Size = new Size(1040, 220), BackColor = Color.White, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
             inputCard.Paint += (s, e) =>
             {
                 using var path = ThemeColors.GetRoundedRect(new Rectangle(0, 0, inputCard.Width - 2, inputCard.Height - 2), 12);
@@ -70,7 +68,7 @@ namespace LibraryManagement.Forms.Panels
 
             Controls.Add(inputCard);
 
-            dgvBooks = new DataGridView { Location = new Point(HorizontalMargin, 324), Size = new Size(1040, 332), Anchor = AnchorStyles.Top | AnchorStyles.Left };
+            dgvBooks = new DataGridView { Location = new Point(32, 324), Size = new Size(1040, 332), Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom };
             dgvBooks.Columns.Add("MaSach", "Mã sách");
             dgvBooks.Columns.Add("TenSach", "Tên sách");
             dgvBooks.Columns.Add("TacGia", "Tác giả");
@@ -113,19 +111,6 @@ namespace LibraryManagement.Forms.Panels
 
             ReloadCategoryOptions();
             LoadBooks();
-
-            Resize += (_, _) => ApplyResponsiveLayout();
-            ApplyResponsiveLayout();
-        }
-
-        private void ApplyResponsiveLayout()
-        {
-            int availableWidth = Math.Max(900, ClientSize.Width - (HorizontalMargin * 2));
-            inputCard.Width = availableWidth;
-            dgvBooks.Width = availableWidth;
-
-            int availableHeight = Math.Max(260, ClientSize.Height - dgvBooks.Top - 16);
-            dgvBooks.Height = availableHeight;
         }
 
         private void AddInputField(Panel parent, string label, int x, int y, int width, out TextBox textBox)

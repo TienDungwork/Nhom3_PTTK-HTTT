@@ -22,7 +22,6 @@ namespace LibraryManagement.Forms.Panels
         {
             Dock = DockStyle.Fill;
             BackColor = ThemeColors.Background;
-            AutoScroll = true;
 
             Controls.Add(new Label
             {
@@ -48,7 +47,7 @@ namespace LibraryManagement.Forms.Panels
                 Location = new Point(HorizontalMargin, 92),
                 Size = new Size(960, 220),
                 BackColor = Color.White,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
             card.Paint += (s, e) =>
             {
@@ -99,7 +98,7 @@ namespace LibraryManagement.Forms.Panels
             {
                 Location = new Point(HorizontalMargin, 324),
                 Size = new Size(960, 320),
-                Anchor = AnchorStyles.Top | AnchorStyles.Left
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom
             };
             dgvCopies.Columns.Add("MaQuyenSach", "Mã quyển");
             dgvCopies.Columns.Add("MaSach", "Mã đầu sách");
@@ -118,20 +117,6 @@ namespace LibraryManagement.Forms.Panels
             ClearForm();
             LoadCopies();
             cboSach.SelectedIndexChanged += (_, _) => UpdateSelectedCategory();
-
-            Resize += (_, _) => ApplyResponsiveLayout();
-            ApplyResponsiveLayout();
-        }
-
-        private void ApplyResponsiveLayout()
-        {
-            int availableWidth = Math.Max(760, ClientSize.Width - (HorizontalMargin * 2));
-
-            card.Width = availableWidth;
-            dgvCopies.Width = availableWidth;
-
-            int availableHeight = Math.Max(220, ClientSize.Height - dgvCopies.Top - 16);
-            dgvCopies.Height = availableHeight;
         }
 
         private void AddInput(Panel parent, string label, int x, int y, int width, out TextBox box)
