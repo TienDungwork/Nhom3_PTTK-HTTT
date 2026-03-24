@@ -12,6 +12,7 @@ namespace LibraryManagement.Forms.Panels
     public class BookCopyManagePanel : UserControl
     {
         private const int HorizontalMargin = 32;
+        private const int WideModeThreshold = 1350;
         private TextBox txtMaQuyen = null!, txtDanhMuc = null!, txtNhaCungCap = null!, txtGhiChu = null!;
         private ComboBox cboSach = null!, cboTrangThai = null!;
         private DateTimePicker dtpNgayNhap = null!;
@@ -109,7 +110,7 @@ namespace LibraryManagement.Forms.Panels
             dgvCopies.Columns.Add("NCC", "Nhà cung cấp");
             dgvCopies.Columns.Add("GhiChu", "Ghi chú");
             ModernDataGridView.ApplyStyle(dgvCopies);
-            dgvCopies.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvCopies.ScrollBars = ScrollBars.Both;
             dgvCopies.CellClick += DgvCopies_CellClick;
             Controls.Add(dgvCopies);
 
@@ -117,6 +118,39 @@ namespace LibraryManagement.Forms.Panels
             ClearForm();
             LoadCopies();
             cboSach.SelectedIndexChanged += (_, _) => UpdateSelectedCategory();
+            ApplyCopyGridLayout();
+            Resize += (_, _) => ApplyCopyGridLayout();
+        }
+
+        private void ApplyCopyGridLayout()
+        {
+            if (dgvCopies.Columns.Count == 0) return;
+
+            bool wideMode = Width >= WideModeThreshold;
+            if (wideMode)
+            {
+                dgvCopies.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+                dgvCopies.Columns["MaQuyenSach"].MinimumWidth = 80;
+                dgvCopies.Columns["MaSach"].MinimumWidth = 90;
+                dgvCopies.Columns["TenSach"].MinimumWidth = 160;
+                dgvCopies.Columns["DanhMuc"].MinimumWidth = 100;
+                dgvCopies.Columns["NgayNhap"].MinimumWidth = 100;
+                dgvCopies.Columns["TrangThai"].MinimumWidth = 100;
+                dgvCopies.Columns["NCC"].MinimumWidth = 120;
+                dgvCopies.Columns["GhiChu"].MinimumWidth = 130;
+            }
+            else
+            {
+                dgvCopies.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
+                dgvCopies.Columns["MaQuyenSach"].Width = 90;
+                dgvCopies.Columns["MaSach"].Width = 90;
+                dgvCopies.Columns["TenSach"].Width = 200;
+                dgvCopies.Columns["DanhMuc"].Width = 120;
+                dgvCopies.Columns["NgayNhap"].Width = 100;
+                dgvCopies.Columns["TrangThai"].Width = 110;
+                dgvCopies.Columns["NCC"].Width = 150;
+                dgvCopies.Columns["GhiChu"].Width = 170;
+            }
         }
 
         private void AddInput(Panel parent, string label, int x, int y, int width, out TextBox box)

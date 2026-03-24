@@ -11,6 +11,7 @@ namespace LibraryManagement.Forms.Panels
 {
     public class BookTitlePanel : UserControl
     {
+        private const int WideModeThreshold = 1350;
         private TextBox txtMaSach = null!, txtTenSach = null!, txtTacGia = null!, txtChuDe = null!;
         private TextBox txtNXB = null!, txtISBN = null!, txtURI = null!, txtNamXB = null!, txtSoLuong = null!;
         private ComboBox cboDanhMuc = null!;
@@ -80,37 +81,62 @@ namespace LibraryManagement.Forms.Panels
             dgvBooks.Columns.Add("ConLai", "Hiện có");
             ModernDataGridView.ApplyStyle(dgvBooks);
             // Responsive layout: grow/shrink with form width, keep quantity columns visible.
-            dgvBooks.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvBooks.ScrollBars = ScrollBars.Both;
             // Tighten table spacing specifically for this screen so all columns fit better.
             dgvBooks.ColumnHeadersDefaultCellStyle.Padding = new Padding(6, 6, 6, 6);
             dgvBooks.DefaultCellStyle.Padding = new Padding(6, 4, 6, 4);
             dgvBooks.AlternatingRowsDefaultCellStyle.Padding = new Padding(6, 4, 6, 4);
-
-            dgvBooks.Columns["MaSach"].MinimumWidth = 60;
-            dgvBooks.Columns["TenSach"].MinimumWidth = 120;
-            dgvBooks.Columns["TacGia"].MinimumWidth = 100;
-            dgvBooks.Columns["DanhMuc"].MinimumWidth = 90;
-            dgvBooks.Columns["ChuDe"].MinimumWidth = 90;
-            dgvBooks.Columns["NamXB"].MinimumWidth = 60;
-            dgvBooks.Columns["SoLuong"].MinimumWidth = 70;
-            dgvBooks.Columns["DangMuon"].MinimumWidth = 70;
-            dgvBooks.Columns["ConLai"].MinimumWidth = 60;
-
-            dgvBooks.Columns["MaSach"].FillWeight = 8;
-            dgvBooks.Columns["TenSach"].FillWeight = 22;
-            dgvBooks.Columns["TacGia"].FillWeight = 15;
-            dgvBooks.Columns["DanhMuc"].FillWeight = 11;
-            dgvBooks.Columns["ChuDe"].FillWeight = 12;
-            dgvBooks.Columns["NamXB"].FillWeight = 7;
-            dgvBooks.Columns["SoLuong"].FillWeight = 9;
-            dgvBooks.Columns["DangMuon"].FillWeight = 8;
-            dgvBooks.Columns["ConLai"].FillWeight = 8;
             dgvBooks.CellClick += DgvBooks_CellClick;
             Controls.Add(dgvBooks);
 
             ReloadCategoryOptions();
             LoadBooks();
+            ApplyBookGridLayout();
+            Resize += (_, _) => ApplyBookGridLayout();
+        }
+
+        private void ApplyBookGridLayout()
+        {
+            if (dgvBooks.Columns.Count == 0) return;
+
+            bool wideMode = Width >= WideModeThreshold;
+            if (wideMode)
+            {
+                dgvBooks.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+                dgvBooks.Columns["MaSach"].MinimumWidth = 70;
+                dgvBooks.Columns["TenSach"].MinimumWidth = 150;
+                dgvBooks.Columns["TacGia"].MinimumWidth = 120;
+                dgvBooks.Columns["DanhMuc"].MinimumWidth = 90;
+                dgvBooks.Columns["ChuDe"].MinimumWidth = 90;
+                dgvBooks.Columns["NamXB"].MinimumWidth = 70;
+                dgvBooks.Columns["SoLuong"].MinimumWidth = 80;
+                dgvBooks.Columns["DangMuon"].MinimumWidth = 80;
+                dgvBooks.Columns["ConLai"].MinimumWidth = 75;
+
+                dgvBooks.Columns["MaSach"].FillWeight = 8;
+                dgvBooks.Columns["TenSach"].FillWeight = 22;
+                dgvBooks.Columns["TacGia"].FillWeight = 15;
+                dgvBooks.Columns["DanhMuc"].FillWeight = 11;
+                dgvBooks.Columns["ChuDe"].FillWeight = 12;
+                dgvBooks.Columns["NamXB"].FillWeight = 7;
+                dgvBooks.Columns["SoLuong"].FillWeight = 9;
+                dgvBooks.Columns["DangMuon"].FillWeight = 8;
+                dgvBooks.Columns["ConLai"].FillWeight = 8;
+            }
+            else
+            {
+                // Compact mode: keep all columns accessible via horizontal scroll, avoid over-compression.
+                dgvBooks.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
+                dgvBooks.Columns["MaSach"].Width = 80;
+                dgvBooks.Columns["TenSach"].Width = 200;
+                dgvBooks.Columns["TacGia"].Width = 150;
+                dgvBooks.Columns["DanhMuc"].Width = 120;
+                dgvBooks.Columns["ChuDe"].Width = 130;
+                dgvBooks.Columns["NamXB"].Width = 80;
+                dgvBooks.Columns["SoLuong"].Width = 95;
+                dgvBooks.Columns["DangMuon"].Width = 90;
+                dgvBooks.Columns["ConLai"].Width = 85;
+            }
         }
 
         private void AddInputField(Panel parent, string label, int x, int y, int width, out TextBox textBox)
