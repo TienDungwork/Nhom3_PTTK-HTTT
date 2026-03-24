@@ -20,11 +20,12 @@ namespace LibraryManagement.Forms.Panels
         {
             Dock = DockStyle.Fill;
             BackColor = ThemeColors.Background;
+            AutoScroll = true;
 
             Controls.Add(new Label { Text = "QUẢN LÝ ĐẦU SÁCH", Font = ThemeColors.HeaderFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(32, 20), Size = new Size(420, 40), BackColor = Color.Transparent });
             Controls.Add(new Label { Text = "Quản lý thông tin thư mục của từng đầu sách và gắn với danh mục nghiệp vụ", Font = ThemeColors.BodyFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(32, 60), Size = new Size(700, 22), BackColor = Color.Transparent });
 
-            var inputCard = new Panel { Location = new Point(32, 92), Size = new Size(1040, 220), BackColor = Color.White, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
+            var inputCard = new Panel { Location = new Point(32, 92), Size = new Size(1040, 220), BackColor = Color.White, Anchor = AnchorStyles.Top | AnchorStyles.Left };
             inputCard.Paint += (s, e) =>
             {
                 using var path = ThemeColors.GetRoundedRect(new Rectangle(0, 0, inputCard.Width - 2, inputCard.Height - 2), 12);
@@ -67,7 +68,7 @@ namespace LibraryManagement.Forms.Panels
 
             Controls.Add(inputCard);
 
-            dgvBooks = new DataGridView { Location = new Point(32, 324), Size = new Size(1040, 332), Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom };
+            dgvBooks = new DataGridView { Location = new Point(32, 324), Size = new Size(1040, 332), Anchor = AnchorStyles.Top | AnchorStyles.Left };
             dgvBooks.Columns.Add("MaSach", "Mã sách");
             dgvBooks.Columns.Add("TenSach", "Tên sách");
             dgvBooks.Columns.Add("TacGia", "Tác giả");
@@ -78,28 +79,18 @@ namespace LibraryManagement.Forms.Panels
             dgvBooks.Columns.Add("DangMuon", "Đang mượn");
             dgvBooks.Columns.Add("ConLai", "Hiện có");
             ModernDataGridView.ApplyStyle(dgvBooks);
-            // Responsive columns: expand/shrink with form size.
-            dgvBooks.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            // Fixed layout like Book Copy management: stable width + horizontal scroll.
+            dgvBooks.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
             dgvBooks.ScrollBars = ScrollBars.Both;
-            dgvBooks.Columns["MaSach"].MinimumWidth = 80;
-            dgvBooks.Columns["TenSach"].MinimumWidth = 180;
-            dgvBooks.Columns["TacGia"].MinimumWidth = 140;
-            dgvBooks.Columns["DanhMuc"].MinimumWidth = 120;
-            dgvBooks.Columns["ChuDe"].MinimumWidth = 120;
-            dgvBooks.Columns["NamXB"].MinimumWidth = 80;
-            dgvBooks.Columns["SoLuong"].MinimumWidth = 100;
-            dgvBooks.Columns["DangMuon"].MinimumWidth = 95;
-            dgvBooks.Columns["ConLai"].MinimumWidth = 90;
-
-            dgvBooks.Columns["MaSach"].FillWeight = 8;
-            dgvBooks.Columns["TenSach"].FillWeight = 19;
-            dgvBooks.Columns["TacGia"].FillWeight = 16;
-            dgvBooks.Columns["DanhMuc"].FillWeight = 11;
-            dgvBooks.Columns["ChuDe"].FillWeight = 13;
-            dgvBooks.Columns["NamXB"].FillWeight = 8;
-            dgvBooks.Columns["SoLuong"].FillWeight = 9;
-            dgvBooks.Columns["DangMuon"].FillWeight = 8;
-            dgvBooks.Columns["ConLai"].FillWeight = 8;
+            dgvBooks.Columns["MaSach"].Width = 90;
+            dgvBooks.Columns["TenSach"].Width = 230;
+            dgvBooks.Columns["TacGia"].Width = 170;
+            dgvBooks.Columns["DanhMuc"].Width = 140;
+            dgvBooks.Columns["ChuDe"].Width = 150;
+            dgvBooks.Columns["NamXB"].Width = 90;
+            dgvBooks.Columns["SoLuong"].Width = 120;
+            dgvBooks.Columns["DangMuon"].Width = 110;
+            dgvBooks.Columns["ConLai"].Width = 100;
             dgvBooks.CellClick += DgvBooks_CellClick;
             Controls.Add(dgvBooks);
 
