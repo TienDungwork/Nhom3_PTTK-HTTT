@@ -24,8 +24,8 @@ namespace LibraryManagement.Forms.Panels
             BackColor = ThemeColors.Background;
 
             var topPanel = new Panel { Dock = DockStyle.Top, Height = 80, BackColor = ThemeColors.Background };
-            topPanel.Controls.Add(new Label { Text = "MƯỢN / TRẢ SÁCH", Font = ThemeColors.HeaderFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(32, 16), Size = new Size(400, 36), BackColor = Color.Transparent });
-            topPanel.Controls.Add(new Label { Text = "Chọn đầu sách trong bảng rồi nhấn Mượn hoặc Trả", Font = ThemeColors.BodyFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(32, 50), Size = new Size(500, 22), BackColor = Color.Transparent });
+            topPanel.Controls.Add(new Label { Text = "LẬP PHIẾU MƯỢN / TRẢ SÁCH", Font = ThemeColors.HeaderFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(32, 16), Size = new Size(520, 36), BackColor = Color.Transparent });
+            topPanel.Controls.Add(new Label { Text = "Độc giả tạo phiếu mượn chờ duyệt; thao tác trả sẽ được cập nhật ngay khi đủ điều kiện", Font = ThemeColors.BodyFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(32, 50), Size = new Size(760, 22), BackColor = Color.Transparent });
 
             topPanel.Controls.Add(new Label { Text = "Tìm kiếm sách", Font = ThemeColors.SmallFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(560, 20), Size = new Size(120, 18), BackColor = Color.Transparent });
             txtSearch = new TextBox { Location = new Point(560, 40), Size = new Size(320, 30), Font = ThemeColors.BodyFont, BorderStyle = BorderStyle.FixedSingle };
@@ -72,7 +72,7 @@ namespace LibraryManagement.Forms.Panels
             };
             bottomBar.Controls.Add(cboQuyenSach);
 
-            var btnMuon = new RoundedButton { Text = "Mượn sách", Size = new Size(180, 48), Location = new Point(20, 76), ButtonColor = ThemeColors.Success, Font = new Font("Segoe UI Semibold", 12) };
+            var btnMuon = new RoundedButton { Text = "Lập phiếu mượn", Size = new Size(180, 48), Location = new Point(20, 76), ButtonColor = ThemeColors.Success, Font = new Font("Segoe UI Semibold", 12) };
             btnMuon.Click += BtnMuon_Click;
             bottomBar.Controls.Add(btnMuon);
 
@@ -185,16 +185,22 @@ namespace LibraryManagement.Forms.Panels
             }
 
             var cu = UserStore.CurrentUser;
+            string maDocGia = GetCurrentReaderCode(cu);
+            if (string.IsNullOrWhiteSpace(maDocGia))
+            {
+                MessageBox.Show("Tài khoản hiện tại chưa được gắn với hồ sơ độc giả.", "Không thể lập phiếu", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             string maQuyenSach = GetSelectedCopyCode();
-            var result = LibraryDataService.BorrowBook(maSach, cu?.Username ?? "", cu?.HoTen ?? "", dtpNgayMuon.Value, soNgay, maQuyenSach);
+            var result = LibraryDataService.CreateBorrowRequest(maSach, maDocGia, cu?.HoTen ?? "", dtpNgayMuon.Value, soNgay, maQuyenSach);
             if (!result.Success)
             {
                 MessageBox.Show(result.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            var record = SampleData.BorrowRecords.Last();
-            MessageBox.Show($"{result.Message}\nMã quyển: {result.CopyCode}\nHạn trả: {record.NgayHenTra:dd/MM/yyyy}", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show($"{result.Message}\nNgày mượn dự kiến: {dtpNgayMuon.Value:dd/MM/yyyy}\nHạn trả dự kiến: {dtpNgayMuon.Value.AddDays(soNgay):dd/MM/yyyy}", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
             LoadBooks(txtSearch.Text.Trim());
         }
 
@@ -209,7 +215,14 @@ namespace LibraryManagement.Forms.Panels
             var row = dgvBooks.SelectedRows[0];
             string maSach = row.Cells["MaSach"].Value?.ToString() ?? "";
             var cu = UserStore.CurrentUser;
-            var result = LibraryDataService.ReturnBook(maSach, cu?.Username ?? "", DateTime.Now);
+            string maDocGia = GetCurrentReaderCode(cu);
+            if (string.IsNullOrWhiteSpace(maDocGia))
+            {
+                MessageBox.Show("Tài khoản hiện tại chưa được gắn với hồ sơ độc giả.", "Không thể trả", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var result = LibraryDataService.ReturnBook(maSach, maDocGia, DateTime.Now);
             if (!result.Success)
             {
                 MessageBox.Show(result.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -218,6 +231,20 @@ namespace LibraryManagement.Forms.Panels
 
             MessageBox.Show(result.Message, "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
             LoadBooks(txtSearch.Text.Trim());
+        }
+
+        private static string GetCurrentReaderCode(AppUser? user)
+        {
+            if (user == null || user.Role != UserRole.DocGia)
+                return "";
+
+            if (!string.IsNullOrWhiteSpace(user.MaDocGia))
+                return user.MaDocGia;
+
+            var reader = SampleData.Readers.FirstOrDefault(r =>
+                string.Equals(r.Email, user.Email, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(r.HoTen, user.HoTen, StringComparison.OrdinalIgnoreCase));
+            return reader?.MaDocGia ?? "";
         }
     }
 }

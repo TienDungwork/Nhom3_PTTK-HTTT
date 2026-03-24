@@ -30,8 +30,9 @@ namespace LibraryManagement.Forms.Panels
             ModernDataGridView.ApplyStyle(dgv);
 
             var cu = UserStore.CurrentUser;
+            string maDocGia = cu?.MaDocGia ?? "";
             var records = SampleData.BorrowRecords
-                .Where(r => r.MaDocGia == (cu?.Username ?? ""))
+                .Where(r => r.MaDocGia == maDocGia)
                 .OrderByDescending(r => r.NgayMuon)
                 .ToList();
 

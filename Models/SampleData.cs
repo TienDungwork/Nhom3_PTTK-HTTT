@@ -74,6 +74,34 @@ namespace LibraryManagement.Models
             new BorrowRecord { MaMuon = "M006", MaDocGia = "DG005", TenDocGia = "Võ Thanh Tùng", MaSach = "S007", MaQuyenSach = "Q014", TenSach = "Tâm lý học đại cương", NgayMuon = DateTime.Now.AddDays(-8), NgayHenTra = DateTime.Now.AddDays(6), TrangThai = "Đang mượn" },
         };
 
+        public static List<BorrowRequest> BorrowRequests = new List<BorrowRequest>
+        {
+            new BorrowRequest
+            {
+                MaYeuCau = "YC001",
+                MaDocGia = "DG001",
+                TenDocGia = "Nguyễn Văn Minh",
+                MaSach = "S002",
+                TenSach = "Cấu trúc dữ liệu và giải thuật",
+                NgayMuonDuKien = DateTime.Now.AddDays(1),
+                SoNgayMuon = 14,
+                NgayTaoYeuCau = DateTime.Now.AddHours(-6),
+                TrangThai = "Chờ duyệt"
+            },
+            new BorrowRequest
+            {
+                MaYeuCau = "YC002",
+                MaDocGia = "DG002",
+                TenDocGia = "Trần Thị Lan",
+                MaSach = "S001",
+                TenSach = "Lập trình C# cơ bản",
+                NgayMuonDuKien = DateTime.Now,
+                SoNgayMuon = 7,
+                NgayTaoYeuCau = DateTime.Now.AddHours(-2),
+                TrangThai = "Chờ duyệt"
+            }
+        };
+
         public static List<string> Categories =>
             new List<string> { "Tất cả" }
                 .Concat(BookCategories.OrderBy(c => c.TenDanhMuc).Select(c => c.TenDanhMuc))

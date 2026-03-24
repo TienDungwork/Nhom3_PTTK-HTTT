@@ -383,7 +383,8 @@ namespace LibraryManagement.Models
             string tenDocGia,
             DateTime ngayMuon,
             int soNgayMuon,
-            string maQuyenSach = "")
+            string maQuyenSach = "",
+            string maYeuCau = "")
         {
             var book = SampleData.Books.FirstOrDefault(b => b.MaSach == maSach);
             if (book == null)
@@ -398,6 +399,7 @@ namespace LibraryManagement.Models
             SampleData.BorrowRecords.Add(new BorrowRecord
             {
                 MaMuon = "M" + (SampleData.BorrowRecords.Count + 1).ToString("D3"),
+                MaYeuCau = maYeuCau,
                 MaDocGia = maDocGia,
                 TenDocGia = tenDocGia,
                 MaSach = maSach,
@@ -411,6 +413,111 @@ namespace LibraryManagement.Models
 
             RecalculateBookInventoryFromCopies(maSach);
             return (true, $"Mượn sách \"{book.TenSach}\" thành công.", copy.MaQuyenSach);
+        }
+
+        public static (bool Success, string Message) CreateBorrowRequest(
+            string maSach,
+            string maDocGia,
+            string tenDocGia,
+            DateTime ngayMuonDuKien,
+            int soNgayMuon,
+            string maQuyenSach = "")
+        {
+            if (string.IsNullOrWhiteSpace(maDocGia))
+                return (false, "Không xác định được độc giả.");
+
+            var reader = SampleData.Readers.FirstOrDefault(r => r.MaDocGia == maDocGia);
+            if (reader == null)
+                return (false, "Độc giả chưa được quản lý trong hệ thống.");
+
+            var book = SampleData.Books.FirstOrDefault(b => b.MaSach == maSach);
+            if (book == null)
+                return (false, "Không tìm thấy đầu sách.");
+
+            if (soNgayMuon <= 0)
+                return (false, "Số ngày mượn không hợp lệ.");
+
+            var copy = PickCopyForBorrow(maSach, maQuyenSach);
+            if (copy == null)
+                return (false, "Không còn quyển sách khả dụng cho yêu cầu này.");
+
+            bool hasPending = SampleData.BorrowRequests.Any(r =>
+                r.MaDocGia == maDocGia &&
+                r.MaSach == maSach &&
+                r.TrangThai == "Chờ duyệt");
+            if (hasPending)
+                return (false, "Bạn đã có yêu cầu mượn đang chờ duyệt cho đầu sách này.");
+
+            SampleData.BorrowRequests.Add(new BorrowRequest
+            {
+                MaYeuCau = GenerateBorrowRequestCode(),
+                MaDocGia = maDocGia,
+                TenDocGia = string.IsNullOrWhiteSpace(tenDocGia) ? reader.HoTen : tenDocGia,
+                MaSach = maSach,
+                TenSach = book.TenSach,
+                MaQuyenSachYeuCau = maQuyenSach,
+                NgayMuonDuKien = ngayMuonDuKien,
+                SoNgayMuon = soNgayMuon,
+                NgayTaoYeuCau = DateTime.Now,
+                TrangThai = "Chờ duyệt"
+            });
+
+            return (true, "Đã lập phiếu yêu cầu mượn. Vui lòng chờ thủ thư duyệt.");
+        }
+
+        public static (bool Success, string Message) ApproveBorrowRequest(string maYeuCau, string nguoiDuyet)
+        {
+            var request = SampleData.BorrowRequests.FirstOrDefault(r => r.MaYeuCau == maYeuCau);
+            if (request == null)
+                return (false, "Không tìm thấy yêu cầu mượn.");
+
+            if (request.TrangThai != "Chờ duyệt")
+                return (false, "Yêu cầu này đã được xử lý trước đó.");
+
+            var borrowResult = BorrowBook(
+                request.MaSach,
+                request.MaDocGia,
+                request.TenDocGia,
+                request.NgayMuonDuKien,
+                request.SoNgayMuon,
+                request.MaQuyenSachYeuCau,
+                request.MaYeuCau);
+
+            if (!borrowResult.Success)
+                return (false, borrowResult.Message);
+
+            request.TrangThai = "Đã duyệt";
+            request.NguoiDuyet = nguoiDuyet;
+            request.MaMuon = SampleData.BorrowRecords.Last().MaMuon;
+
+            SendNotificationToReader(
+                request.MaDocGia,
+                "Phiếu mượn đã được duyệt",
+                $"Yêu cầu {request.MaYeuCau} cho sách \"{request.TenSach}\" đã được duyệt.",
+                nguoiDuyet);
+
+            return (true, "Đã duyệt phiếu mượn và tạo phiếu mượn thành công.");
+        }
+
+        public static (bool Success, string Message) RejectBorrowRequest(string maYeuCau, string nguoiDuyet, string lyDo = "")
+        {
+            var request = SampleData.BorrowRequests.FirstOrDefault(r => r.MaYeuCau == maYeuCau);
+            if (request == null)
+                return (false, "Không tìm thấy yêu cầu mượn.");
+
+            if (request.TrangThai != "Chờ duyệt")
+                return (false, "Yêu cầu này đã được xử lý trước đó.");
+
+            request.TrangThai = "Từ chối";
+            request.NguoiDuyet = nguoiDuyet;
+            request.LyDoTuChoi = lyDo.Trim();
+
+            string noiDung = $"Yêu cầu {request.MaYeuCau} cho sách \"{request.TenSach}\" đã bị từ chối.";
+            if (!string.IsNullOrWhiteSpace(request.LyDoTuChoi))
+                noiDung += $" Lý do: {request.LyDoTuChoi}.";
+
+            SendNotificationToReader(request.MaDocGia, "Phiếu mượn bị từ chối", noiDung, nguoiDuyet);
+            return (true, "Đã từ chối phiếu mượn.");
         }
 
         public static (bool Success, string Message, BorrowRecord? Record) ReturnBook(string maSach, string maDocGia, DateTime ngayTra)
@@ -428,6 +535,26 @@ namespace LibraryManagement.Models
                 return (false, "Phiếu quá hạn chưa được thu phạt, không thể xác nhận trả sách.", null);
 
             CompleteReturn(record, ngayTra);
+            return (true, $"Trả sách \"{record.TenSach}\" thành công.", record);
+        }
+
+        public static (bool Success, string Message, BorrowRecord? Record) ReturnBookByBorrowCode(string maMuon, DateTime ngayTra)
+        {
+            var record = SampleData.BorrowRecords.FirstOrDefault(r => r.MaMuon == maMuon && r.TrangThai == "Đang mượn");
+            if (record == null)
+                return (false, "Không tìm thấy phiếu mượn đang hiệu lực.", null);
+
+            decimal tienPhatHienTai = CalculateLateFee(record, ngayTra);
+            if (tienPhatHienTai > 0 && !record.DaThuPhat)
+                return (false, "Phiếu quá hạn chưa được thu phạt, không thể xác nhận trả sách.", null);
+
+            CompleteReturn(record, ngayTra);
+            SendNotificationToReader(
+                record.MaDocGia,
+                "Xác nhận đã trả sách",
+                $"Thư viện đã xác nhận bạn trả sách \"{record.TenSach}\" (phiếu {record.MaMuon}).",
+                "Thủ thư");
+
             return (true, $"Trả sách \"{record.TenSach}\" thành công.", record);
         }
 
@@ -482,6 +609,22 @@ namespace LibraryManagement.Models
         public static int CountBooksByCategory(string maDanhMuc)
         {
             return SampleData.Books.Count(b => b.MaDanhMuc == maDanhMuc);
+        }
+
+        public static Notification SendNotificationToReader(string maDocGia, string tieuDe, string noiDung, string nguoiGui = "Thủ thư")
+        {
+            var notification = new Notification
+            {
+                MaThongBao = GenerateNotificationCode(),
+                MaDocGia = maDocGia,
+                NguoiGui = string.IsNullOrWhiteSpace(nguoiGui) ? "Thủ thư" : nguoiGui,
+                ThoiGian = DateTime.Now,
+                TieuDe = tieuDe.Trim(),
+                NoiDung = noiDung.Trim(),
+                DaDoc = false
+            };
+            UserStore.Notifications.Add(notification);
+            return notification;
         }
 
         private static bool IsValidIsbn(string isbn)
@@ -558,6 +701,30 @@ namespace LibraryManagement.Models
                 .Max();
 
             return "Q" + (max + 1).ToString("D3");
+        }
+
+        public static string GenerateBorrowRequestCode()
+        {
+            int max = SampleData.BorrowRequests
+                .Select(r => r.MaYeuCau)
+                .Where(code => code.StartsWith("YC", StringComparison.OrdinalIgnoreCase))
+                .Select(code => int.TryParse(code.Substring(2), out int n) ? n : 0)
+                .DefaultIfEmpty(0)
+                .Max();
+
+            return "YC" + (max + 1).ToString("D3");
+        }
+
+        public static string GenerateNotificationCode()
+        {
+            int max = UserStore.Notifications
+                .Select(n => n.MaThongBao)
+                .Where(code => code.StartsWith("TB", StringComparison.OrdinalIgnoreCase))
+                .Select(code => int.TryParse(code.Substring(2), out int n) ? n : 0)
+                .DefaultIfEmpty(0)
+                .Max();
+
+            return "TB" + (max + 1).ToString("D3");
         }
     }
 }

@@ -5,6 +5,7 @@ namespace LibraryManagement.Models
     public class BorrowRecord
     {
         public string MaMuon { get; set; } = "";
+        public string MaYeuCau { get; set; } = "";
         public string MaDocGia { get; set; } = "";
         public string TenDocGia { get; set; } = "";
         public string MaSach { get; set; } = "";

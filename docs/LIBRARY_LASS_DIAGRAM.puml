@@ -1,161 +1,141 @@
 @startuml
 skinparam classAttributeIconSize 0
 hide circle
-left to right direction
-skinparam linetype ortho
-skinparam packageStyle rectangle
 
-package "NguoiDung" {
-  abstract class NguoiDung {
-    +maTK: String
-    +hoTen: String
-    +email: String
-    +soDienThoai: String
-    +tenDangNhap: String
-    +matKhau: String
-    +isActive: boolean
-    +vaiTro: VaiTro
-  }
+'======================
+' NGUOI DUNG
+'======================
 
-  class ThuThu {
-    +maThuThu: String
-  }
-
-  class DocGia {
-    +maDocGia: String
-    +diaChi: String
-    +ngayDangKy: Date
-  }
-
-  class QuanTriVien {
-    +maQuanTri: String
-  }
-
-  NguoiDung <|-- ThuThu
-  NguoiDung <|-- DocGia
-  NguoiDung <|-- QuanTriVien
+class ThuThu {
+  maThuThu: String
+  hoTen: String
+  email: String
+  soDienThoai: String
+  tenDangNhap: String
+  matKhau: String
 }
 
-package "QuanLySach" {
-  class DanhMucSach {
-    +maDanhMuc: String
-    +tenDanhMuc: String
-    +moTa: String
-    +viTriKe: String
-    +dangSuDung: boolean
-  }
-
-  class DauSach {
-    +maDauSach: String
-    +tenSach: String
-    +tacGia: String
-    +chuDe: String
-    +nhaXuatBan: String
-    +namXuatBan: int
-    +isbn: String
-    +viTriKho: String
-    +trangThai: String
-  }
-
-  class QuyenSach {
-    +maQuyenSach: String
-    +ngayNhap: Date
-    +tinhTrang: String
-    +trangThai: TrangThaiQuyenSach
-    +viTri: String
-  }
-
-  DanhMucSach "1" o-- "0..*" DauSach : phan_loai
-  DauSach "1" *-- "1..*" QuyenSach : bao_gom
+class DocGia {
+  maDocGia: String
+  hoTen: String
+  email: String
+  soDienThoai: String
+  tenDangNhap: String
+  matKhau: String
+  diaChi: String
+  ngayDangKy: Date
 }
 
-package "MuonTra" {
-  class PhieuDatMuon {
-    +maPhieuDat: String
-    +ngayDat: Date
-    +trangThai: TrangThaiPhieuDat
-  }
-
-  class PhieuMuon {
-    +maPhieuMuon: String
-    +ngayMuon: Date
-    +hanTra: Date
-    +trangThai: TrangThaiPhieuMuon
-    +tienPhat: double
-    +daThuPhat: boolean
-  }
-
-  class PhieuMuonChiTiet {
-    +soLuong: int
-    +ngayTraThuc: Date
-    +trangThai: TrangThaiChiTiet
-  }
-
-  PhieuDatMuon "1" --> "0..1" PhieuMuon : chuyen_thanh
-  PhieuMuon "1" *-- "1..*" PhieuMuonChiTiet : gom_chi_tiet
+class QuanTriVien {
+  maQuanTri: String
+  hoTen: String
+  email: String
+  soDienThoai: String
+  tenDangNhap: String
+  matKhau: String
 }
 
-package "HeThong" {
-  class ThongBao {
-    +maThongBao: String
-    +noiDung: String
-    +ngayGui: Date
-    +trangThai: String
-  }
+'======================
+' QUAN LY SACH
+'======================
 
-  class NhatKyHeThong {
-    +maNhatKy: String
-    +hanhDong: String
-    +thoiGian: Date
-    +chiTiet: String
-  }
-
-  class CauHinhHeThong {
-    +soNgayMuonToiDa: int
-    +soSachMuonToiDa: int
-    +phiPhatMoiNgay: double
-  }
+class DanhMucSach {
+  maDanhMuc: String
+  tenDanhMuc: String
+  moTa: String
 }
 
-enum VaiTro {
-  Admin
-  ThuThu
-  DocGia
+class DauSach {
+  maDauSach: String
+  tenSach: String
+  tacGia: String
+  nhaXuatBan: String
+  namXuatBan: int
 }
 
-enum TrangThaiQuyenSach {
-  SanSang
-  DangMuon
-  MatHong
+class QuyenSach {
+  maQuyenSach: String
+  ngayNhap: Date
+  tinhTrang: String
+  trangThai: String
+  viTri: String
 }
 
-enum TrangThaiPhieuDat {
-  ChoDuyet
-  DaDuyet
-  TuChoi
-  DaChuyenPhieuMuon
+'======================
+' MUON / TRA
+'======================
+
+class QuanLyMuonTra {
+  tab1: DuyetMuonSach
+  tab2: XuLiTraSach
 }
 
-enum TrangThaiPhieuMuon {
-  DangMuon
-  QuaHan
-  DaTra
+class PhieuYeuCauMuon {
+  maYeuCau: String
+  ngayTaoYeuCau: Date
+  ngayMuonDuKien: Date
+  soNgayMuon: int
+  trangThai: String
 }
 
-enum TrangThaiChiTiet {
-  DangMuon
-  DaTra
+class PhieuMuon {
+  maPhieuMuon: String
+  maYeuCau: String
+  ngayMuon: Date
+  hanTra: Date
+  ngayTraThuc: Date
+  trangThai: String
+  tienPhat: double
+  daThuPhat: boolean
 }
 
-DocGia "1" -- "0..*" PhieuDatMuon : tao
-DocGia "1" -- "0..*" PhieuMuon : muon
-ThuThu "1" -- "0..*" PhieuDatMuon : duyet
-ThuThu "1" -- "0..*" PhieuMuon : lap_xu_ly
+'======================
+' HE THONG
+'======================
 
-PhieuMuonChiTiet "0..*" -- "1" QuyenSach : muon_quyen
+class ThongBao {
+  maThongBao: String
+  maDocGia: String
+  noiDung: String
+  nguoiGui: String
+  ngayGui: Date
+  trangThai: String
+  daDoc: boolean
+}
 
-DocGia "1" -- "0..*" ThongBao : nhan
-QuanTriVien "1" -- "0..*" NhatKyHeThong : tao
-QuanTriVien "1" -- "1" CauHinhHeThong : quan_ly
+class NhatKyHeThong {
+  maNhatKy: String
+  hanhDong: String
+  thoiGian: Date
+}
+
+class CauHinhHeThong {
+  soNgayMuonToiDa: int
+  soSachMuonToiDa: int
+  phiPhatMoiNgay: double
+}
+
+'======================
+' QUAN HE
+'======================
+
+DanhMucSach "1" -- "n" DauSach
+DauSach "1" -- "n" QuyenSach
+
+DocGia "1" -- "n" PhieuYeuCauMuon
+DocGia "1" -- "n" PhieuMuon
+
+PhieuYeuCauMuon "1" --> "0..1" PhieuMuon
+QuyenSach "1" -- "n" PhieuMuon
+
+DocGia "1" -- "n" ThongBao
+
+QuanTriVien "1" -- "n" NhatKyHeThong
+QuanTriVien "1" -- "1" CauHinhHeThong
+
+ThuThu "1" -- "n" PhieuMuon
+ThuThu "1" -- "n" PhieuYeuCauMuon
+ThuThu "1" -- "n" ThongBao
+ThuThu "1" -- "1" QuanLyMuonTra
 
 @enduml

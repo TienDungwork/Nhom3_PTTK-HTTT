@@ -53,6 +53,7 @@ namespace LibraryManagement.Forms
                 new[] { "\uE8C8", "Quản lý danh mục sách" },
                 new[] { "\uE721", "Tra cứu & phân loại" },
                 new[] { "\uE762", "Quản lý mượn trả" },
+                new[] { "\uE716", "Quản lý độc giả" },
                 new[] { "\uE7BA", "Quản lý quá hạn" },
                 new[] { "\uE7A8", "Báo cáo thống kê" },
             };
@@ -119,8 +120,9 @@ namespace LibraryManagement.Forms
                 3 => new CatalogPanel(),
                 4 => new ClassifyPanel(),
                 5 => new BorrowManagePanel(),
-                6 => new OverduePanel(),
-                7 => new ReportPanel(),
+                6 => new ReaderManagePanel(),
+                7 => new OverduePanel(),
+                8 => new ReportPanel(),
                 _ => new LibrarianDashboard()
             };
             panel.Dock = DockStyle.Fill;

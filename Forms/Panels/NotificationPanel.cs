@@ -18,20 +18,26 @@ namespace LibraryManagement.Forms.Panels
 
         private void InitializeUI()
         {
-            int unread = UserStore.Notifications.Count(n => !n.DaDoc);
+            string maDocGia = UserStore.CurrentUser?.MaDocGia ?? "";
+            var notifications = UserStore.Notifications
+                .Where(n => n.MaDocGia == maDocGia)
+                .OrderByDescending(n => n.ThoiGian)
+                .ToList();
+
+            int unread = notifications.Count(n => !n.DaDoc);
             Controls.Add(new Label { Text = "THÔNG BÁO", Font = ThemeColors.HeaderFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(32, 20), Size = new Size(400, 40), BackColor = Color.Transparent });
             Controls.Add(new Label { Text = $"Bạn có {unread} thông báo chưa đọc", Font = ThemeColors.BodyFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(32, 62), Size = new Size(400, 22), BackColor = Color.Transparent });
 
             var btnMarkAll = new RoundedButton { Text = "Đánh dấu đã đọc tất cả", Size = new Size(220, 38), Location = new Point(32, 96), ButtonColor = ThemeColors.Primary, Font = ThemeColors.SmallFont };
             btnMarkAll.Click += (s, e) =>
             {
-                foreach (var n in UserStore.Notifications) n.DaDoc = true;
+                foreach (var n in notifications) n.DaDoc = true;
                 Controls.Clear(); InitializeUI();
             };
             Controls.Add(btnMarkAll);
 
             int y = 150;
-            foreach (var notif in UserStore.Notifications.OrderByDescending(n => n.ThoiGian))
+            foreach (var notif in notifications)
             {
                 Panel card = new Panel { Location = new Point(32, y), Size = new Size(700, 100), BackColor = Color.Transparent };
                 bool isUnread = !notif.DaDoc;

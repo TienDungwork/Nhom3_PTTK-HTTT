@@ -10,6 +10,7 @@ namespace LibraryManagement.Models
     public class AppUser
     {
         public string MaTK { get; set; } = "";
+        public string MaDocGia { get; set; } = "";
         public string Username { get; set; } = "";
         public string Password { get; set; } = "";
         public string HoTen { get; set; } = "";
@@ -38,6 +39,9 @@ namespace LibraryManagement.Models
 
     public class Notification
     {
+        public string MaThongBao { get; set; } = "";
+        public string MaDocGia { get; set; } = "";
+        public string NguoiGui { get; set; } = "";
         public DateTime ThoiGian { get; set; }
         public string TieuDe { get; set; } = "";
         public string NoiDung { get; set; } = "";
@@ -60,9 +64,9 @@ namespace LibraryManagement.Models
         {
             new AppUser { MaTK = "TK001", Username = "admin",   Password = "admin123",   HoTen = "Nguyễn Quản Trị",   Email = "admin@thuvien.vn",   SDT = "0901234567", Role = UserRole.Admin },
             new AppUser { MaTK = "TK002", Username = "thuthu",  Password = "thuthu123",  HoTen = "Trần Thị Thủ Thư",  Email = "thuthu@thuvien.vn",  SDT = "0912345678", Role = UserRole.ThuThu },
-            new AppUser { MaTK = "TK003", Username = "docgia",  Password = "docgia123",  HoTen = "Phạm Văn Độc Giả",  Email = "docgia@gmail.com",   SDT = "0923456789", Role = UserRole.DocGia },
+            new AppUser { MaTK = "TK003", MaDocGia = "DG001", Username = "docgia",  Password = "docgia123",  HoTen = "Nguyễn Văn Minh",  Email = "minh@email.com",   SDT = "0901234567", Role = UserRole.DocGia },
             new AppUser { MaTK = "TK004", Username = "thuthu2", Password = "thuthu123",  HoTen = "Lê Văn Thủ Thư 2",  Email = "thuthu2@thuvien.vn", SDT = "0934567890", Role = UserRole.ThuThu },
-            new AppUser { MaTK = "TK005", Username = "docgia2", Password = "docgia123",  HoTen = "Ngô Thị Minh Anh",  Email = "minhanh@gmail.com",  SDT = "0945678901", Role = UserRole.DocGia },
+            new AppUser { MaTK = "TK005", MaDocGia = "DG002", Username = "docgia2", Password = "docgia123",  HoTen = "Trần Thị Lan",  Email = "lan@email.com",  SDT = "0912345678", Role = UserRole.DocGia },
         };
 
         public static AppUser? CurrentUser { get; set; }
@@ -84,9 +88,9 @@ namespace LibraryManagement.Models
 
         public static List<Notification> Notifications = new List<Notification>
         {
-            new Notification { ThoiGian = DateTime.Now.AddHours(-2), TieuDe = "Sắp đến hạn trả sách", NoiDung = "Sách 'Đắc Nhân Tâm' sẽ đến hạn trả trong 2 ngày.", DaDoc = false },
-            new Notification { ThoiGian = DateTime.Now.AddDays(-1), TieuDe = "Yêu cầu gia hạn đã duyệt", NoiDung = "Yêu cầu gia hạn sách 'Lập Trình C#' đã được duyệt thêm 7 ngày.", DaDoc = true },
-            new Notification { ThoiGian = DateTime.Now.AddDays(-3), TieuDe = "Sách mới có sẵn", NoiDung = "Thư viện vừa bổ sung 5 đầu sách mới về Công nghệ thông tin.", DaDoc = true },
+            new Notification { MaThongBao = "TB001", MaDocGia = "DG001", NguoiGui = "Hệ thống", ThoiGian = DateTime.Now.AddHours(-2), TieuDe = "Sắp đến hạn trả sách", NoiDung = "Sách 'Đắc Nhân Tâm' sẽ đến hạn trả trong 2 ngày.", DaDoc = false },
+            new Notification { MaThongBao = "TB002", MaDocGia = "DG002", NguoiGui = "Thủ thư", ThoiGian = DateTime.Now.AddDays(-1), TieuDe = "Nhắc nhở trả sách", NoiDung = "Vui lòng kiểm tra các sách đã mượn và trả đúng hạn.", DaDoc = false },
+            new Notification { MaThongBao = "TB003", MaDocGia = "DG001", NguoiGui = "Thủ thư", ThoiGian = DateTime.Now.AddDays(-3), TieuDe = "Sách mới có sẵn", NoiDung = "Thư viện vừa bổ sung đầu sách mới về Công nghệ thông tin.", DaDoc = true },
         };
 
         public static List<ExtensionRequest> ExtensionRequests = new List<ExtensionRequest>
