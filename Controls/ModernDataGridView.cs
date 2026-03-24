@@ -19,6 +19,7 @@ namespace LibraryManagement.Controls
             dgv.AllowUserToDeleteRows = false;
             dgv.AllowUserToResizeRows = false;
             dgv.RowHeadersVisible = false;
+            // Responsive columns by default; each panel can enforce minimum widths when needed.
             dgv.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgv.BackgroundColor = Color.White;
             dgv.GridColor = ThemeColors.BorderLight;

@@ -100,25 +100,15 @@ namespace LibraryManagement.Forms.Panels
             if (dgvBooks.Columns.Count == 0) return;
 
             dgvBooks.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            dgvBooks.Columns["MaSach"].MinimumWidth = 70;
-            dgvBooks.Columns["TenSach"].MinimumWidth = 150;
-            dgvBooks.Columns["TacGia"].MinimumWidth = 120;
-            dgvBooks.Columns["DanhMuc"].MinimumWidth = 90;
-            dgvBooks.Columns["ChuDe"].MinimumWidth = 90;
-            dgvBooks.Columns["NamXB"].MinimumWidth = 70;
-            dgvBooks.Columns["SoLuong"].MinimumWidth = 80;
-            dgvBooks.Columns["DangMuon"].MinimumWidth = 80;
-            dgvBooks.Columns["ConLai"].MinimumWidth = 75;
-
-            dgvBooks.Columns["MaSach"].FillWeight = 8;
-            dgvBooks.Columns["TenSach"].FillWeight = 22;
-            dgvBooks.Columns["TacGia"].FillWeight = 15;
-            dgvBooks.Columns["DanhMuc"].FillWeight = 11;
-            dgvBooks.Columns["ChuDe"].FillWeight = 12;
-            dgvBooks.Columns["NamXB"].FillWeight = 7;
-            dgvBooks.Columns["SoLuong"].FillWeight = 9;
-            dgvBooks.Columns["DangMuon"].FillWeight = 8;
-            dgvBooks.Columns["ConLai"].FillWeight = 8;
+            dgvBooks.Columns["MaSach"].MinimumWidth = 90;
+            dgvBooks.Columns["TenSach"].MinimumWidth = 220;
+            dgvBooks.Columns["TacGia"].MinimumWidth = 150;
+            dgvBooks.Columns["DanhMuc"].MinimumWidth = 120;
+            dgvBooks.Columns["ChuDe"].MinimumWidth = 130;
+            dgvBooks.Columns["NamXB"].MinimumWidth = 80;
+            dgvBooks.Columns["SoLuong"].MinimumWidth = 100;
+            dgvBooks.Columns["DangMuon"].MinimumWidth = 95;
+            dgvBooks.Columns["ConLai"].MinimumWidth = 90;
         }
 
         private void AddInputField(Panel parent, string label, int x, int y, int width, out TextBox textBox)
