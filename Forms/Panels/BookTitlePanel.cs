@@ -78,6 +78,18 @@ namespace LibraryManagement.Forms.Panels
             dgvBooks.Columns.Add("DangMuon", "Đang mượn");
             dgvBooks.Columns.Add("ConLai", "Hiện có");
             ModernDataGridView.ApplyStyle(dgvBooks);
+            // Explicit sizing + horizontal scrollbar to ensure quantity columns are always reachable.
+            dgvBooks.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
+            dgvBooks.ScrollBars = ScrollBars.Both;
+            dgvBooks.Columns["MaSach"].Width = 90;
+            dgvBooks.Columns["TenSach"].Width = 230;
+            dgvBooks.Columns["TacGia"].Width = 170;
+            dgvBooks.Columns["DanhMuc"].Width = 140;
+            dgvBooks.Columns["ChuDe"].Width = 150;
+            dgvBooks.Columns["NamXB"].Width = 90;
+            dgvBooks.Columns["SoLuong"].Width = 120;
+            dgvBooks.Columns["DangMuon"].Width = 110;
+            dgvBooks.Columns["ConLai"].Width = 100;
             dgvBooks.CellClick += DgvBooks_CellClick;
             Controls.Add(dgvBooks);
 
