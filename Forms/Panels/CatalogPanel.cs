@@ -13,7 +13,6 @@ namespace LibraryManagement.Forms.Panels
     {
         private TextBox txtMaDanhMuc = null!, txtTenDanhMuc = null!, txtMoTa = null!, txtViTriKe = null!;
         private CheckBox chkDangSuDung = null!;
-        private TextBox txtSearch = null!;
         private DataGridView dgvCategories = null!;
 
         public CatalogPanel()
@@ -64,24 +63,9 @@ namespace LibraryManagement.Forms.Panels
             btnClear.Click += (_, _) => ClearForm();
             inputCard.Controls.Add(btnClear);
 
-            inputCard.Controls.Add(new Label
-            {
-                Text = "Tìm kiếm danh mục",
-                Font = ThemeColors.SmallFont,
-                ForeColor = ThemeColors.TextSecondary,
-                Location = new Point(486, 130),
-                Size = new Size(150, 16),
-                BackColor = Color.Transparent
-            });
-            txtSearch = new TextBox
-            {
-                Location = new Point(486, 148),
-                Size = new Size(250, 28),
-                Font = ThemeColors.BodyFont,
-                BorderStyle = BorderStyle.FixedSingle
-            };
-            txtSearch.TextChanged += (_, _) => LoadCategories(txtSearch.Text.Trim());
-            inputCard.Controls.Add(txtSearch);
+            var btnTim = new RoundedButton { Text = "Tìm kiếm", Size = new Size(110, 40), Location = new Point(486, 128), ButtonColor = ThemeColors.Primary, Font = ThemeColors.ButtonFont };
+            btnTim.Click += (_, _) => SearchCategoriesByInputs();
+            inputCard.Controls.Add(btnTim);
 
             Controls.Add(inputCard);
 
@@ -132,6 +116,34 @@ namespace LibraryManagement.Forms.Panels
             }
         }
 
+        private void SearchCategoriesByInputs()
+        {
+            var maDanhMuc = txtMaDanhMuc.Text.Trim();
+            var tenDanhMuc = txtTenDanhMuc.Text.Trim();
+            var moTa = txtMoTa.Text.Trim();
+            var viTriKe = txtViTriKe.Text.Trim();
+
+            dgvCategories.Rows.Clear();
+            var categories = LibraryDataService.GetCategories()
+                .Where(c =>
+                    (string.IsNullOrWhiteSpace(maDanhMuc) || c.MaDanhMuc.Contains(maDanhMuc, StringComparison.OrdinalIgnoreCase)) &&
+                    (string.IsNullOrWhiteSpace(tenDanhMuc) || c.TenDanhMuc.Contains(tenDanhMuc, StringComparison.OrdinalIgnoreCase)) &&
+                    (string.IsNullOrWhiteSpace(moTa) || c.MoTa.Contains(moTa, StringComparison.OrdinalIgnoreCase)) &&
+                    (string.IsNullOrWhiteSpace(viTriKe) || c.ViTriKe.Contains(viTriKe, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+
+            foreach (var category in categories)
+            {
+                dgvCategories.Rows.Add(
+                    category.MaDanhMuc,
+                    category.TenDanhMuc,
+                    category.MoTa,
+                    category.ViTriKe,
+                    LibraryDataService.CountBooksByCategory(category.MaDanhMuc),
+                    category.DangSuDung ? "Đang sử dụng" : "Ngừng sử dụng");
+            }
+        }
+
         private void DgvCategories_CellClick(object? sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
@@ -163,7 +175,7 @@ namespace LibraryManagement.Forms.Panels
             if (!result.Success) return;
 
             ClearForm();
-            LoadCategories(txtSearch.Text.Trim());
+            LoadCategories();
         }
 
         private void BtnXoa_Click(object? sender, EventArgs e)
@@ -185,7 +197,7 @@ namespace LibraryManagement.Forms.Panels
             if (!result.Success) return;
 
             ClearForm();
-            LoadCategories(txtSearch.Text.Trim());
+            LoadCategories();
         }
 
         private void ClearForm()

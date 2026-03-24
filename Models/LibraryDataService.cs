@@ -148,11 +148,8 @@ namespace LibraryManagement.Models
             if (book == null) return;
 
             var copies = SampleData.BookCopies.Where(c => c.MaSach == maSach).ToList();
-            int total = copies.Sum(c => Math.Max(1, c.SoLuong));
             int dangMuon = copies.Count(c => c.TrangThai == "Đang mượn");
             int matHong = copies.Count(c => c.TrangThai == "Mất" || c.TrangThai == "Hỏng");
-
-            book.SoLuong = total;
             book.SoLuongDangMuon = dangMuon;
             book.SoLuongMatHong = matHong;
             SyncBookStatus(book);
@@ -181,11 +178,26 @@ namespace LibraryManagement.Models
                 if (existing != null)
                     return (false, "Mã sách đã tồn tại.");
 
-                book.SoLuong = 0;
+                if (book.SoLuong < 0)
+                    return (false, "Số lượng đầu sách không hợp lệ.");
+
                 book.SoLuongDangMuon = 0;
                 book.SoLuongMatHong = 0;
                 SyncBookStatus(book);
                 SampleData.Books.Add(book);
+
+                for (int i = 0; i < book.SoLuong; i++)
+                {
+                    SampleData.BookCopies.Add(new BookCopy
+                    {
+                        MaQuyenSach = GenerateCopyCode(),
+                        MaSach = book.MaSach,
+                        NgayNhap = DateTime.Today,
+                        TrangThai = "Có sẵn",
+                        NhaCungCap = book.NhaCungCap
+                    });
+                }
+                RecalculateBookInventoryFromCopies(book.MaSach);
                 return (true, "Thêm đầu sách thành công.");
             }
 
@@ -203,6 +215,38 @@ namespace LibraryManagement.Models
             existing.ISBN = book.ISBN;
             existing.ViTriKho = book.ViTriKho;
             existing.NhaCungCap = book.NhaCungCap;
+            if (book.SoLuong < 0)
+                return (false, "Số lượng đầu sách không hợp lệ.");
+
+            var copies = SampleData.BookCopies.Where(c => c.MaSach == existing.MaSach).OrderBy(c => c.NgayNhap).ThenBy(c => c.MaQuyenSach).ToList();
+            int currentCopyCount = copies.Count;
+            if (book.SoLuong < currentCopyCount)
+            {
+                int needRemove = currentCopyCount - book.SoLuong;
+                var removable = copies.Where(c => c.TrangThai == "Có sẵn").Take(needRemove).ToList();
+                if (removable.Count < needRemove)
+                    return (false, "Không thể giảm số lượng vì chưa đủ quyển sách ở trạng thái Có sẵn.");
+
+                foreach (var copy in removable)
+                    SampleData.BookCopies.Remove(copy);
+            }
+            else if (book.SoLuong > currentCopyCount)
+            {
+                int needAdd = book.SoLuong - currentCopyCount;
+                for (int i = 0; i < needAdd; i++)
+                {
+                    SampleData.BookCopies.Add(new BookCopy
+                    {
+                        MaQuyenSach = GenerateCopyCode(),
+                        MaSach = existing.MaSach,
+                        NgayNhap = DateTime.Today,
+                        TrangThai = "Có sẵn",
+                        NhaCungCap = existing.NhaCungCap
+                    });
+                }
+            }
+
+            existing.SoLuong = book.SoLuong;
             RecalculateBookInventoryFromCopies(existing.MaSach);
 
             return (true, "Cập nhật đầu sách thành công.");
@@ -278,9 +322,6 @@ namespace LibraryManagement.Models
             if (string.IsNullOrWhiteSpace(copy.MaQuyenSach) || string.IsNullOrWhiteSpace(copy.MaSach))
                 return (false, "Mã quyển sách và mã đầu sách là bắt buộc.");
 
-            if (copy.SoLuong <= 0)
-                return (false, "Số lượng phải lớn hơn 0.");
-
             if (SampleData.Books.FirstOrDefault(b => b.MaSach == copy.MaSach) == null)
                 return (false, "Mã đầu sách không tồn tại.");
 
@@ -291,6 +332,8 @@ namespace LibraryManagement.Models
                     return (false, "Mã quyển sách đã tồn tại.");
 
                 SampleData.BookCopies.Add(copy);
+                var book = SampleData.Books.FirstOrDefault(b => b.MaSach == copy.MaSach);
+                if (book != null) book.SoLuong++;
                 RecalculateBookInventoryFromCopies(copy.MaSach);
                 return (true, "Thêm quyển sách thành công.");
             }
@@ -310,7 +353,6 @@ namespace LibraryManagement.Models
             existing.TrangThai = copy.TrangThai;
             existing.NhaCungCap = copy.NhaCungCap;
             existing.GhiChu = copy.GhiChu;
-            existing.SoLuong = copy.SoLuong;
             RecalculateBookInventoryFromCopies(existing.MaSach);
 
             return (true, "Cập nhật quyển sách thành công.");
@@ -329,6 +371,8 @@ namespace LibraryManagement.Models
                 return (false, "Không thể xóa quyển sách đã phát sinh giao dịch.");
 
             SampleData.BookCopies.Remove(copy);
+            var book = SampleData.Books.FirstOrDefault(b => b.MaSach == copy.MaSach);
+            if (book != null && book.SoLuong > 0) book.SoLuong--;
             RecalculateBookInventoryFromCopies(copy.MaSach);
             return (true, $"Đã xóa quyển sách {copy.MaQuyenSach}.");
         }
@@ -465,21 +509,24 @@ namespace LibraryManagement.Models
         {
             foreach (var book in SampleData.Books)
             {
-                bool hasCopy = SampleData.BookCopies.Any(c => c.MaSach == book.MaSach);
-                if (hasCopy) continue;
-
-                int initial = Math.Max(0, book.SoLuong);
-                for (int i = 0; i < initial; i++)
+                var copies = SampleData.BookCopies.Where(c => c.MaSach == book.MaSach).ToList();
+                if (copies.Count == 0 && book.SoLuong > 0)
                 {
-                    SampleData.BookCopies.Add(new BookCopy
+                    for (int i = 0; i < book.SoLuong; i++)
                     {
-                        MaQuyenSach = GenerateCopyCode(),
-                        MaSach = book.MaSach,
-                        NgayNhap = DateTime.Today,
-                        SoLuong = 1,
-                        TrangThai = "Có sẵn",
-                        NhaCungCap = book.NhaCungCap
-                    });
+                        SampleData.BookCopies.Add(new BookCopy
+                        {
+                            MaQuyenSach = GenerateCopyCode(),
+                            MaSach = book.MaSach,
+                            NgayNhap = DateTime.Today,
+                            TrangThai = "Có sẵn",
+                            NhaCungCap = book.NhaCungCap
+                        });
+                    }
+                }
+                else if (copies.Count > 0 && book.SoLuong <= 0)
+                {
+                    book.SoLuong = copies.Count;
                 }
             }
         }

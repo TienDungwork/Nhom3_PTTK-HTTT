@@ -15,7 +15,7 @@ CREATE TABLE book_categories (
     dang_su_dung INTEGER NOT NULL DEFAULT 1 CHECK (dang_su_dung IN (0, 1))
 );
 
--- books = dau sach
+-- books = dau sach (chua so luong)
 CREATE TABLE books (
     ma_sach TEXT PRIMARY KEY,
     ten_sach TEXT NOT NULL,
@@ -30,16 +30,18 @@ CREATE TABLE books (
     anh_bia TEXT NOT NULL DEFAULT '',
     vi_tri_kho TEXT NOT NULL DEFAULT '',
     nha_cung_cap TEXT NOT NULL DEFAULT '',
-    trang_thai TEXT NOT NULL DEFAULT 'Dang kinh doanh' CHECK (trang_thai IN ('Dang kinh doanh', 'Ngung kinh doanh')),
+    so_luong INTEGER NOT NULL DEFAULT 0 CHECK (so_luong >= 0),
+    so_luong_dang_muon INTEGER NOT NULL DEFAULT 0 CHECK (so_luong_dang_muon >= 0),
+    so_luong_mat_hong INTEGER NOT NULL DEFAULT 0 CHECK (so_luong_mat_hong >= 0),
+    trang_thai TEXT NOT NULL DEFAULT 'Co san' CHECK (trang_thai IN ('Co san', 'Het sach', 'Ngung kinh doanh')),
     FOREIGN KEY (ma_danh_muc) REFERENCES book_categories(ma_danh_muc)
 );
 
--- book_copies = tung quyen sach, co ma rieng
+-- book_copies = tung quyen sach (chi trang thai)
 CREATE TABLE book_copies (
     ma_quyen_sach TEXT PRIMARY KEY,
     ma_sach TEXT NOT NULL,
     ngay_nhap TEXT NOT NULL,
-    so_luong INTEGER NOT NULL DEFAULT 1 CHECK (so_luong > 0),
     trang_thai TEXT NOT NULL DEFAULT 'Co san'
         CHECK (trang_thai IN ('Co san', 'Dang muon', 'Hong', 'Mat', 'Bao tri')),
     nha_cung_cap TEXT NOT NULL DEFAULT '',
@@ -109,19 +111,19 @@ INSERT INTO book_categories (ma_danh_muc, ten_danh_muc, mo_ta, vi_tri_ke, dang_s
 ('DM006', 'Toan hoc', 'Sach toan co ban va nang cao', 'Ke D', 1),
 ('DM007', 'Triet hoc', 'Triet hoc, chinh tri va ly luan', 'Ke D', 1);
 
-INSERT INTO books (ma_sach, ten_sach, tac_gia, ma_danh_muc, chu_de, nam_xuat_ban, nha_xuat_ban, isbn, vi_tri_kho, nha_cung_cap, trang_thai) VALUES
-('S001', 'Lap trinh C# co ban', 'Nguyen Van A', 'DM001', 'Lap trinh', 2022, 'NXB Giao duc', '978-604-1-00001-0', 'A1-01', 'Fahasa', 'Dang kinh doanh'),
-('S002', 'Cau truc du lieu va giai thuat', 'Tran Thi B', 'DM001', 'Khoa hoc may tinh', 2021, 'NXB DHQG', '978-604-1-00002-7', 'A1-02', 'Fahasa', 'Dang kinh doanh'),
-('S003', 'Tri tue nhan tao', 'Le Hoang C', 'DM001', 'AI', 2023, 'NXB Bach khoa', '978-604-1-00003-4', 'A1-03', 'Tiki', 'Dang kinh doanh');
+INSERT INTO books (ma_sach, ten_sach, tac_gia, ma_danh_muc, chu_de, nam_xuat_ban, nha_xuat_ban, isbn, vi_tri_kho, nha_cung_cap, so_luong, so_luong_dang_muon, so_luong_mat_hong, trang_thai) VALUES
+('S001', 'Lap trinh C# co ban', 'Nguyen Van A', 'DM001', 'Lap trinh', 2022, 'NXB Giao duc', '978-604-1-00001-0', 'A1-01', 'Fahasa', 3, 1, 0, 'Co san'),
+('S002', 'Cau truc du lieu va giai thuat', 'Tran Thi B', 'DM001', 'Khoa hoc may tinh', 2021, 'NXB DHQG', '978-604-1-00002-7', 'A1-02', 'Fahasa', 3, 1, 0, 'Co san'),
+('S003', 'Tri tue nhan tao', 'Le Hoang C', 'DM001', 'AI', 2023, 'NXB Bach khoa', '978-604-1-00003-4', 'A1-03', 'Tiki', 2, 0, 0, 'Co san');
 
-INSERT INTO book_copies (ma_quyen_sach, ma_sach, ngay_nhap, so_luong, trang_thai, nha_cung_cap, ghi_chu) VALUES
-('Q001', 'S001', '2024-01-10', 1, 'Dang muon', 'Fahasa', 'Ban sao 1'),
-('Q002', 'S001', '2024-01-10', 1, 'Co san', 'Fahasa', 'Ban sao 2'),
-('Q003', 'S001', '2025-09-15', 1, 'Co san', 'Fahasa', 'Ban sao bo sung hoc ky moi'),
-('Q004', 'S002', '2024-02-05', 1, 'Dang muon', 'Fahasa', ''),
-('Q005', 'S002', '2024-02-05', 1, 'Co san', 'Fahasa', ''),
-('Q006', 'S003', '2024-03-02', 1, 'Co san', 'Tiki', ''),
-('Q007', 'S003', '2024-03-02', 1, 'Bao tri', 'Tiki', 'Dang bao tri bia sach');
+INSERT INTO book_copies (ma_quyen_sach, ma_sach, ngay_nhap, trang_thai, nha_cung_cap, ghi_chu) VALUES
+('Q001', 'S001', '2024-01-10', 'Dang muon', 'Fahasa', 'Ban sao 1'),
+('Q002', 'S001', '2024-01-10', 'Co san', 'Fahasa', 'Ban sao 2'),
+('Q003', 'S001', '2025-09-15', 'Co san', 'Fahasa', 'Ban sao bo sung hoc ky moi'),
+('Q004', 'S002', '2024-02-05', 'Dang muon', 'Fahasa', ''),
+('Q005', 'S002', '2024-02-05', 'Co san', 'Fahasa', ''),
+('Q006', 'S002', '2024-02-05', 'Co san', 'Fahasa', ''),
+('Q007', 'S003', '2024-03-02', 'Co san', 'Tiki', '');
 
 INSERT INTO readers (ma_doc_gia, ho_ten, email, sdt, dia_chi, ngay_dang_ky) VALUES
 ('DG001', 'Nguyen Van Minh', 'minh@email.com', '0901234567', 'Ha Noi', '2024-01-15'),

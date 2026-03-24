@@ -14,7 +14,6 @@ namespace LibraryManagement.Forms.Panels
         private TextBox txtMaSach = null!, txtTenSach = null!, txtTacGia = null!, txtChuDe = null!;
         private TextBox txtNXB = null!, txtISBN = null!, txtURI = null!, txtNamXB = null!, txtSoLuong = null!;
         private ComboBox cboDanhMuc = null!;
-        private TextBox txtSearch = null!;
         private DataGridView dgvBooks = null!;
 
         public BookTitlePanel()
@@ -40,8 +39,6 @@ namespace LibraryManagement.Forms.Panels
             AddComboField(inputCard, "Danh mục", 624, 12, 170, out cboDanhMuc);
             AddInputField(inputCard, "Năm XB", 810, 12, 80, out txtNamXB);
             AddInputField(inputCard, "Số lượng", 906, 12, 100, out txtSoLuong);
-            txtSoLuong.ReadOnly = true;
-            txtSoLuong.BackColor = Color.FromArgb(248, 250, 252);
 
             AddInputField(inputCard, "Chủ đề", 16, 74, 220, out txtChuDe);
             AddInputField(inputCard, "NXB", 252, 74, 180, out txtNXB);
@@ -64,24 +61,9 @@ namespace LibraryManagement.Forms.Panels
             btnClear.Click += (_, _) => ClearForm();
             inputCard.Controls.Add(btnClear);
 
-            inputCard.Controls.Add(new Label
-            {
-                Text = "Tìm kiếm nhanh",
-                Font = ThemeColors.SmallFont,
-                ForeColor = ThemeColors.TextSecondary,
-                Location = new Point(486, 150),
-                Size = new Size(130, 16),
-                BackColor = Color.Transparent
-            });
-            txtSearch = new TextBox
-            {
-                Location = new Point(486, 168),
-                Size = new Size(260, 28),
-                Font = ThemeColors.BodyFont,
-                BorderStyle = BorderStyle.FixedSingle
-            };
-            txtSearch.TextChanged += (_, _) => LoadBooks(txtSearch.Text.Trim());
-            inputCard.Controls.Add(txtSearch);
+            var btnTim = new RoundedButton { Text = "Tìm kiếm", Size = new Size(110, 40), Location = new Point(486, 148), ButtonColor = ThemeColors.Primary, Font = ThemeColors.ButtonFont };
+            btnTim.Click += (_, _) => SearchBooksByInputs();
+            inputCard.Controls.Add(btnTim);
 
             Controls.Add(inputCard);
 
@@ -132,15 +114,41 @@ namespace LibraryManagement.Forms.Panels
 
             if (!string.IsNullOrWhiteSpace(selected))
                 cboDanhMuc.SelectedValue = selected;
-
-            if (cboDanhMuc.SelectedIndex < 0 && cboDanhMuc.Items.Count > 0)
-                cboDanhMuc.SelectedIndex = 0;
         }
 
         private void LoadBooks(string keyword = "")
         {
             dgvBooks.Rows.Clear();
             foreach (var b in LibraryDataService.SearchBooks(keyword: keyword))
+            {
+                LibraryDataService.SyncBookCategory(b);
+                LibraryDataService.SyncBookStatus(b);
+                dgvBooks.Rows.Add(b.MaSach, b.TenSach, b.TacGia, b.TheLoai, b.ChuDe, b.NamXuatBan, b.SoLuong, b.SoLuongDangMuon, b.SoLuongHienCo);
+            }
+        }
+
+        private void SearchBooksByInputs()
+        {
+            string maSach = txtMaSach.Text.Trim();
+            string tenSach = txtTenSach.Text.Trim();
+            string tacGia = txtTacGia.Text.Trim();
+            string chuDe = txtChuDe.Text.Trim();
+            string danhMuc = cboDanhMuc.SelectedItem is BookCategory category ? category.TenDanhMuc : "";
+
+            var query = SampleData.Books.AsEnumerable();
+            if (!string.IsNullOrWhiteSpace(maSach))
+                query = query.Where(b => b.MaSach.Contains(maSach, StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrWhiteSpace(tenSach))
+                query = query.Where(b => b.TenSach.Contains(tenSach, StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrWhiteSpace(tacGia))
+                query = query.Where(b => b.TacGia.Contains(tacGia, StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrWhiteSpace(chuDe))
+                query = query.Where(b => b.ChuDe.Contains(chuDe, StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrWhiteSpace(danhMuc))
+                query = query.Where(b => string.Equals(LibraryDataService.GetCategoryName(b.MaDanhMuc, b.TheLoai), danhMuc, StringComparison.OrdinalIgnoreCase));
+
+            dgvBooks.Rows.Clear();
+            foreach (var b in query.OrderBy(b => b.TenSach))
             {
                 LibraryDataService.SyncBookCategory(b);
                 LibraryDataService.SyncBookStatus(b);
@@ -183,9 +191,7 @@ namespace LibraryManagement.Forms.Panels
                 NhaXuatBan = txtNXB.Text.Trim(),
                 ISBN = txtISBN.Text.Trim(),
                 URI = txtURI.Text.Trim(),
-                SoLuong = isEditMode
-                    ? (SampleData.Books.FirstOrDefault(b => b.MaSach == txtMaSach.Text.Trim())?.SoLuong ?? soLuong)
-                    : 0
+                SoLuong = soLuong
             };
 
             var result = LibraryDataService.SaveBook(book, isEditMode);
@@ -196,7 +202,7 @@ namespace LibraryManagement.Forms.Panels
 
             ReloadCategoryOptions();
             ClearForm();
-            LoadBooks(txtSearch.Text.Trim());
+            LoadBooks();
         }
 
         private void BtnXoa_Click(object? sender, EventArgs e)
@@ -218,7 +224,7 @@ namespace LibraryManagement.Forms.Panels
             if (!result.Success) return;
 
             ClearForm();
-            LoadBooks(txtSearch.Text.Trim());
+            LoadBooks();
         }
 
         private void ClearForm()
@@ -232,7 +238,7 @@ namespace LibraryManagement.Forms.Panels
             txtISBN.Clear();
             txtURI.Clear();
             txtSoLuong.Clear();
-            if (cboDanhMuc.Items.Count > 0) cboDanhMuc.SelectedIndex = 0;
+            cboDanhMuc.SelectedIndex = -1;
         }
     }
 }

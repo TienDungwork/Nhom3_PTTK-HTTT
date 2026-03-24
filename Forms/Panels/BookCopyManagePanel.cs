@@ -12,7 +12,7 @@ namespace LibraryManagement.Forms.Panels
     public class BookCopyManagePanel : UserControl
     {
         private const int HorizontalMargin = 32;
-        private TextBox txtMaQuyen = null!, txtDanhMuc = null!, txtNhaCungCap = null!, txtSoLuong = null!, txtGhiChu = null!, txtSearch = null!;
+        private TextBox txtMaQuyen = null!, txtDanhMuc = null!, txtNhaCungCap = null!, txtGhiChu = null!;
         private ComboBox cboSach = null!, cboTrangThai = null!;
         private DateTimePicker dtpNgayNhap = null!;
         private DataGridView dgvCopies = null!;
@@ -35,7 +35,7 @@ namespace LibraryManagement.Forms.Panels
             });
             Controls.Add(new Label
             {
-                Text = "Quản lý từng quyển sách theo mã riêng, đầu sách, ngày nhập, số lượng và trạng thái",
+                Text = "Quản lý từng quyển sách theo mã riêng, đầu sách, ngày nhập và trạng thái",
                 Font = ThemeColors.BodyFont,
                 ForeColor = ThemeColors.TextSecondary,
                 Location = new Point(32, 60),
@@ -64,11 +64,14 @@ namespace LibraryManagement.Forms.Panels
             txtDanhMuc.ReadOnly = true;
             txtDanhMuc.BackColor = Color.FromArgb(248, 250, 252);
             AddDateInput(card, "Ngày nhập", 654, 12, 130, out dtpNgayNhap);
+            dtpNgayNhap.ShowCheckBox = true;
+            dtpNgayNhap.Checked = false;
             AddComboInput(card, "Trạng thái", 800, 12, 120, out cboTrangThai, new[] { "Có sẵn", "Đang mượn", "Hỏng", "Mất", "Bảo trì" });
+            cboTrangThai.Items.Insert(0, "Tất cả");
+            cboTrangThai.SelectedIndex = 0;
 
-            AddInput(card, "Số lượng", 16, 74, 120, out txtSoLuong);
-            AddInput(card, "Nhà cung cấp", 152, 74, 220, out txtNhaCungCap);
-            AddInput(card, "Ghi chú", 388, 74, 618, out txtGhiChu);
+            AddInput(card, "Nhà cung cấp", 16, 74, 220, out txtNhaCungCap);
+            AddInput(card, "Ghi chú", 252, 74, 754, out txtGhiChu);
 
             var btnThem = new RoundedButton { Text = "Thêm sách", Size = new Size(110, 40), Location = new Point(16, 148), ButtonColor = ThemeColors.Success, Font = ThemeColors.ButtonFont };
             btnThem.Click += (_, _) => SaveCopy(false);
@@ -86,18 +89,9 @@ namespace LibraryManagement.Forms.Panels
             btnClear.Click += (_, _) => ClearForm();
             card.Controls.Add(btnClear);
 
-            card.Controls.Add(new Label
-            {
-                Text = "Tìm kiếm quyển / đầu sách / danh mục",
-                Font = ThemeColors.SmallFont,
-                ForeColor = ThemeColors.TextSecondary,
-                Location = new Point(500, 150),
-                Size = new Size(250, 16),
-                BackColor = Color.Transparent
-            });
-            txtSearch = new TextBox { Location = new Point(500, 168), Size = new Size(260, 28), Font = ThemeColors.BodyFont, BorderStyle = BorderStyle.FixedSingle };
-            txtSearch.TextChanged += (_, _) => LoadCopies(txtSearch.Text.Trim());
-            card.Controls.Add(txtSearch);
+            var btnTim = new RoundedButton { Text = "Tìm kiếm", Size = new Size(110, 40), Location = new Point(500, 148), ButtonColor = ThemeColors.Primary, Font = ThemeColors.ButtonFont };
+            btnTim.Click += (_, _) => SearchCopiesByInputs();
+            card.Controls.Add(btnTim);
 
             Controls.Add(card);
 
@@ -112,7 +106,6 @@ namespace LibraryManagement.Forms.Panels
             dgvCopies.Columns.Add("TenSach", "Tên đầu sách");
             dgvCopies.Columns.Add("DanhMuc", "Danh mục");
             dgvCopies.Columns.Add("NgayNhap", "Ngày nhập");
-            dgvCopies.Columns.Add("SoLuong", "Số lượng");
             dgvCopies.Columns.Add("TrangThai", "Trạng thái");
             dgvCopies.Columns.Add("NCC", "Nhà cung cấp");
             dgvCopies.Columns.Add("GhiChu", "Ghi chú");
@@ -198,8 +191,6 @@ namespace LibraryManagement.Forms.Panels
             cboSach.ValueMember = "MaSach";
             if (!string.IsNullOrWhiteSpace(selected))
                 cboSach.SelectedValue = selected;
-            if (cboSach.SelectedIndex < 0 && cboSach.Items.Count > 0)
-                cboSach.SelectedIndex = 0;
             UpdateSelectedCategory();
         }
 
@@ -221,7 +212,45 @@ namespace LibraryManagement.Forms.Panels
                     LibraryDataService.GetBookName(copy.MaSach),
                     LibraryDataService.GetBookCategoryName(copy.MaSach),
                     copy.NgayNhap.ToString("dd/MM/yyyy"),
-                    copy.SoLuong,
+                    copy.TrangThai,
+                    copy.NhaCungCap,
+                    copy.GhiChu);
+            }
+        }
+
+        private void SearchCopiesByInputs()
+        {
+            string maQuyen = txtMaQuyen.Text.Trim();
+            string maSach = cboSach.SelectedValue?.ToString() ?? "";
+            string danhMuc = txtDanhMuc.Text.Trim();
+            string nhaCungCap = txtNhaCungCap.Text.Trim();
+            string ghiChu = txtGhiChu.Text.Trim();
+            string trangThai = cboTrangThai.SelectedItem?.ToString() ?? "Tất cả";
+            bool locNgayNhap = dtpNgayNhap.Checked;
+            var ngayNhap = dtpNgayNhap.Value.Date;
+
+            var copies = SampleData.BookCopies
+                .Where(c =>
+                    (string.IsNullOrWhiteSpace(maQuyen) || c.MaQuyenSach.Contains(maQuyen, StringComparison.OrdinalIgnoreCase)) &&
+                    (string.IsNullOrWhiteSpace(maSach) || c.MaSach == maSach) &&
+                    (string.IsNullOrWhiteSpace(danhMuc) || LibraryDataService.GetBookCategoryName(c.MaSach).Contains(danhMuc, StringComparison.OrdinalIgnoreCase)) &&
+                    (string.IsNullOrWhiteSpace(nhaCungCap) || c.NhaCungCap.Contains(nhaCungCap, StringComparison.OrdinalIgnoreCase)) &&
+                    (string.IsNullOrWhiteSpace(ghiChu) || c.GhiChu.Contains(ghiChu, StringComparison.OrdinalIgnoreCase)) &&
+                    (string.IsNullOrWhiteSpace(trangThai) || trangThai == "Tất cả" || string.Equals(c.TrangThai, trangThai, StringComparison.OrdinalIgnoreCase)) &&
+                    (!locNgayNhap || c.NgayNhap.Date == ngayNhap))
+                .OrderByDescending(c => c.NgayNhap)
+                .ThenBy(c => c.MaQuyenSach)
+                .ToList();
+
+            dgvCopies.Rows.Clear();
+            foreach (var copy in copies)
+            {
+                dgvCopies.Rows.Add(
+                    copy.MaQuyenSach,
+                    copy.MaSach,
+                    LibraryDataService.GetBookName(copy.MaSach),
+                    LibraryDataService.GetBookCategoryName(copy.MaSach),
+                    copy.NgayNhap.ToString("dd/MM/yyyy"),
                     copy.TrangThai,
                     copy.NhaCungCap,
                     copy.GhiChu);
@@ -241,7 +270,6 @@ namespace LibraryManagement.Forms.Panels
             dtpNgayNhap.Value = copy.NgayNhap;
             cboTrangThai.SelectedItem = copy.TrangThai;
             txtNhaCungCap.Text = copy.NhaCungCap;
-            txtSoLuong.Text = copy.SoLuong.ToString();
             txtGhiChu.Text = copy.GhiChu;
         }
 
@@ -253,12 +281,6 @@ namespace LibraryManagement.Forms.Panels
                 return;
             }
 
-            if (!int.TryParse(txtSoLuong.Text.Trim(), out int soLuong))
-            {
-                MessageBox.Show("Số lượng không hợp lệ.", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
             var copy = new BookCopy
             {
                 MaQuyenSach = txtMaQuyen.Text.Trim(),
@@ -266,7 +288,6 @@ namespace LibraryManagement.Forms.Panels
                 NgayNhap = dtpNgayNhap.Value.Date,
                 TrangThai = cboTrangThai.SelectedItem?.ToString() ?? "Có sẵn",
                 NhaCungCap = txtNhaCungCap.Text.Trim(),
-                SoLuong = soLuong,
                 GhiChu = txtGhiChu.Text.Trim()
             };
 
@@ -275,7 +296,7 @@ namespace LibraryManagement.Forms.Panels
                 result.Success ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
             if (!result.Success) return;
 
-            LoadCopies(txtSearch.Text.Trim());
+            LoadCopies();
             ClearForm();
         }
 
@@ -296,7 +317,7 @@ namespace LibraryManagement.Forms.Panels
                 result.Success ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
             if (!result.Success) return;
 
-            LoadCopies(txtSearch.Text.Trim());
+            LoadCopies();
             ClearForm();
         }
 
@@ -304,11 +325,11 @@ namespace LibraryManagement.Forms.Panels
         {
             txtMaQuyen.Text = LibraryDataService.GenerateCopyCode();
             txtNhaCungCap.Clear();
-            txtSoLuong.Text = "1";
             txtGhiChu.Clear();
             dtpNgayNhap.Value = DateTime.Today;
+            dtpNgayNhap.Checked = false;
             if (cboTrangThai.Items.Count > 0) cboTrangThai.SelectedIndex = 0;
-            if (cboSach.Items.Count > 0) cboSach.SelectedIndex = 0;
+            cboSach.SelectedIndex = -1;
         }
     }
 }
