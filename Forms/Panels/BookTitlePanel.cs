@@ -84,23 +84,28 @@ namespace LibraryManagement.Forms.Panels
             // Responsive layout: grow/shrink with form width, keep quantity columns visible.
             dgvBooks.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvBooks.ScrollBars = ScrollBars.Both;
-            dgvBooks.Columns["MaSach"].MinimumWidth = 80;
-            dgvBooks.Columns["TenSach"].MinimumWidth = 180;
-            dgvBooks.Columns["TacGia"].MinimumWidth = 130;
-            dgvBooks.Columns["DanhMuc"].MinimumWidth = 120;
-            dgvBooks.Columns["ChuDe"].MinimumWidth = 120;
-            dgvBooks.Columns["NamXB"].MinimumWidth = 80;
-            dgvBooks.Columns["SoLuong"].MinimumWidth = 100;
-            dgvBooks.Columns["DangMuon"].MinimumWidth = 95;
-            dgvBooks.Columns["ConLai"].MinimumWidth = 90;
+            // Tighten table spacing specifically for this screen so all columns fit better.
+            dgvBooks.ColumnHeadersDefaultCellStyle.Padding = new Padding(6, 6, 6, 6);
+            dgvBooks.DefaultCellStyle.Padding = new Padding(6, 4, 6, 4);
+            dgvBooks.AlternatingRowsDefaultCellStyle.Padding = new Padding(6, 4, 6, 4);
+
+            dgvBooks.Columns["MaSach"].MinimumWidth = 60;
+            dgvBooks.Columns["TenSach"].MinimumWidth = 120;
+            dgvBooks.Columns["TacGia"].MinimumWidth = 100;
+            dgvBooks.Columns["DanhMuc"].MinimumWidth = 90;
+            dgvBooks.Columns["ChuDe"].MinimumWidth = 90;
+            dgvBooks.Columns["NamXB"].MinimumWidth = 60;
+            dgvBooks.Columns["SoLuong"].MinimumWidth = 70;
+            dgvBooks.Columns["DangMuon"].MinimumWidth = 70;
+            dgvBooks.Columns["ConLai"].MinimumWidth = 60;
 
             dgvBooks.Columns["MaSach"].FillWeight = 8;
-            dgvBooks.Columns["TenSach"].FillWeight = 20;
-            dgvBooks.Columns["TacGia"].FillWeight = 14;
-            dgvBooks.Columns["DanhMuc"].FillWeight = 12;
+            dgvBooks.Columns["TenSach"].FillWeight = 22;
+            dgvBooks.Columns["TacGia"].FillWeight = 15;
+            dgvBooks.Columns["DanhMuc"].FillWeight = 11;
             dgvBooks.Columns["ChuDe"].FillWeight = 12;
-            dgvBooks.Columns["NamXB"].FillWeight = 8;
-            dgvBooks.Columns["SoLuong"].FillWeight = 10;
+            dgvBooks.Columns["NamXB"].FillWeight = 7;
+            dgvBooks.Columns["SoLuong"].FillWeight = 9;
             dgvBooks.Columns["DangMuon"].FillWeight = 8;
             dgvBooks.Columns["ConLai"].FillWeight = 8;
             dgvBooks.CellClick += DgvBooks_CellClick;
