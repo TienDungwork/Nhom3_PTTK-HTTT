@@ -78,18 +78,28 @@ namespace LibraryManagement.Forms.Panels
             dgvBooks.Columns.Add("DangMuon", "Đang mượn");
             dgvBooks.Columns.Add("ConLai", "Hiện có");
             ModernDataGridView.ApplyStyle(dgvBooks);
-            // Explicit sizing + horizontal scrollbar to ensure quantity columns are always reachable.
-            dgvBooks.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
+            // Responsive columns: expand/shrink with form size.
+            dgvBooks.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvBooks.ScrollBars = ScrollBars.Both;
-            dgvBooks.Columns["MaSach"].Width = 90;
-            dgvBooks.Columns["TenSach"].Width = 230;
-            dgvBooks.Columns["TacGia"].Width = 170;
-            dgvBooks.Columns["DanhMuc"].Width = 140;
-            dgvBooks.Columns["ChuDe"].Width = 150;
-            dgvBooks.Columns["NamXB"].Width = 90;
-            dgvBooks.Columns["SoLuong"].Width = 120;
-            dgvBooks.Columns["DangMuon"].Width = 110;
-            dgvBooks.Columns["ConLai"].Width = 100;
+            dgvBooks.Columns["MaSach"].MinimumWidth = 80;
+            dgvBooks.Columns["TenSach"].MinimumWidth = 180;
+            dgvBooks.Columns["TacGia"].MinimumWidth = 140;
+            dgvBooks.Columns["DanhMuc"].MinimumWidth = 120;
+            dgvBooks.Columns["ChuDe"].MinimumWidth = 120;
+            dgvBooks.Columns["NamXB"].MinimumWidth = 80;
+            dgvBooks.Columns["SoLuong"].MinimumWidth = 100;
+            dgvBooks.Columns["DangMuon"].MinimumWidth = 95;
+            dgvBooks.Columns["ConLai"].MinimumWidth = 90;
+
+            dgvBooks.Columns["MaSach"].FillWeight = 8;
+            dgvBooks.Columns["TenSach"].FillWeight = 19;
+            dgvBooks.Columns["TacGia"].FillWeight = 16;
+            dgvBooks.Columns["DanhMuc"].FillWeight = 11;
+            dgvBooks.Columns["ChuDe"].FillWeight = 13;
+            dgvBooks.Columns["NamXB"].FillWeight = 8;
+            dgvBooks.Columns["SoLuong"].FillWeight = 9;
+            dgvBooks.Columns["DangMuon"].FillWeight = 8;
+            dgvBooks.Columns["ConLai"].FillWeight = 8;
             dgvBooks.CellClick += DgvBooks_CellClick;
             Controls.Add(dgvBooks);
 
