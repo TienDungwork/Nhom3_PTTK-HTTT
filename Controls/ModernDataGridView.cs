@@ -62,7 +62,7 @@ namespace LibraryManagement.Controls
             };
 
             dgv.RowTemplate.Height = 44;
-            dgv.ScrollBars = ScrollBars.Vertical;
+            dgv.ScrollBars = ScrollBars.Both;
 
             // Hover effect
             dgv.CellMouseEnter += (s, e) =>
