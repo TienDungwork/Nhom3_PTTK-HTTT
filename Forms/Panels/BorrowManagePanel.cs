@@ -17,6 +17,7 @@ namespace LibraryManagement.Forms.Panels
         {
             Dock = DockStyle.Fill;
             BackColor = ThemeColors.Background;
+            AutoScroll = true;
 
             Controls.Add(new Label { Text = "QUẢN LÝ MƯỢN TRẢ", Font = ThemeColors.HeaderFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(32, 20), Size = new Size(400, 40), BackColor = Color.Transparent });
             Controls.Add(new Label { Text = "Xem và quản lý tất cả phiếu mượn trả sách", Font = ThemeColors.BodyFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(32, 60), Size = new Size(500, 22), BackColor = Color.Transparent });

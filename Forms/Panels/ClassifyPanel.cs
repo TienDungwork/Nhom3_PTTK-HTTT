@@ -19,6 +19,7 @@ namespace LibraryManagement.Forms.Panels
         {
             Dock = DockStyle.Fill;
             BackColor = ThemeColors.Background;
+            AutoScroll = true;
 
             Controls.Add(new Label { Text = "TRA CỨU VÀ PHÂN LOẠI ĐẦU SÁCH", Font = ThemeColors.HeaderFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(32, 20), Size = new Size(520, 40), BackColor = Color.Transparent });
             Controls.Add(new Label { Text = "Lọc đầu sách theo danh mục và tác giả dựa trên danh mục nghiệp vụ đã khai báo", Font = ThemeColors.BodyFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(32, 60), Size = new Size(700, 22), BackColor = Color.Transparent });

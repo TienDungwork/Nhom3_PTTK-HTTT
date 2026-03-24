@@ -12,6 +12,11 @@ namespace LibraryManagement.Forms.Panels
     public class BookCopyManagePanel : UserControl
     {
         private const int HorizontalMargin = 32;
+        private const int InputTop = 92;
+        private const int InputHeight = 220;
+        private const int GridTop = 324;
+        private const int BaseContentWidth = 1200;
+        private const int BaseContentHeight = 700;
         private TextBox txtMaQuyen = null!, txtDanhMuc = null!, txtNhaCungCap = null!, txtGhiChu = null!;
         private ComboBox cboSach = null!, cboTrangThai = null!;
         private DateTimePicker dtpNgayNhap = null!;
@@ -22,6 +27,7 @@ namespace LibraryManagement.Forms.Panels
         {
             Dock = DockStyle.Fill;
             BackColor = ThemeColors.Background;
+            AutoScroll = true;
 
             Controls.Add(new Label
             {
@@ -44,7 +50,7 @@ namespace LibraryManagement.Forms.Panels
 
             card = new Panel
             {
-                Location = new Point(HorizontalMargin, 92),
+                Location = new Point(HorizontalMargin, InputTop),
                 Size = new Size(960, 220),
                 BackColor = Color.White,
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
@@ -96,7 +102,7 @@ namespace LibraryManagement.Forms.Panels
 
             dgvCopies = new DataGridView
             {
-                Location = new Point(HorizontalMargin, 324),
+                Location = new Point(HorizontalMargin, GridTop),
                 Size = new Size(960, 320),
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom
             };
@@ -117,24 +123,42 @@ namespace LibraryManagement.Forms.Panels
             ClearForm();
             LoadCopies();
             cboSach.SelectedIndexChanged += (_, _) => UpdateSelectedCategory();
+            ApplyPanelLayout();
             ApplyCopyGridLayout();
-            Resize += (_, _) => ApplyCopyGridLayout();
-            Load += (_, _) => ApplyCopyGridLayout();
+            Resize += (_, _) =>
+            {
+                ApplyPanelLayout();
+                ApplyCopyGridLayout();
+            };
+            Load += (_, _) =>
+            {
+                ApplyPanelLayout();
+                ApplyCopyGridLayout();
+            };
+        }
+
+        private void ApplyPanelLayout()
+        {
+            int panelWidth = Math.Max(BaseContentWidth, ClientSize.Width - HorizontalMargin * 2);
+            int gridHeight = Math.Max(260, ClientSize.Height - (GridTop + 28));
+            card.SetBounds(HorizontalMargin, InputTop, panelWidth, InputHeight);
+            dgvCopies.SetBounds(HorizontalMargin, GridTop, panelWidth, gridHeight);
+            AutoScrollMinSize = new Size(panelWidth + HorizontalMargin, BaseContentHeight);
         }
 
         private void ApplyCopyGridLayout()
         {
             if (dgvCopies.Columns.Count == 0) return;
 
-            dgvCopies.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            dgvCopies.Columns["MaQuyenSach"].MinimumWidth = 80;
-            dgvCopies.Columns["MaSach"].MinimumWidth = 90;
-            dgvCopies.Columns["TenSach"].MinimumWidth = 160;
-            dgvCopies.Columns["DanhMuc"].MinimumWidth = 100;
-            dgvCopies.Columns["NgayNhap"].MinimumWidth = 100;
-            dgvCopies.Columns["TrangThai"].MinimumWidth = 100;
-            dgvCopies.Columns["NCC"].MinimumWidth = 120;
-            dgvCopies.Columns["GhiChu"].MinimumWidth = 130;
+            dgvCopies.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
+            dgvCopies.Columns["MaQuyenSach"].Width = 90;
+            dgvCopies.Columns["MaSach"].Width = 100;
+            dgvCopies.Columns["TenSach"].Width = 220;
+            dgvCopies.Columns["DanhMuc"].Width = 130;
+            dgvCopies.Columns["NgayNhap"].Width = 110;
+            dgvCopies.Columns["TrangThai"].Width = 120;
+            dgvCopies.Columns["NCC"].Width = 170;
+            dgvCopies.Columns["GhiChu"].Width = 220;
         }
 
         private void AddInput(Panel parent, string label, int x, int y, int width, out TextBox box)
