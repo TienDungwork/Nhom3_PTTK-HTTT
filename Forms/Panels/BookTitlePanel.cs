@@ -38,12 +38,12 @@ namespace LibraryManagement.Forms.Panels
             AddInputField(inputCard, "Tác giả", 428, 12, 180, out txtTacGia);
             AddComboField(inputCard, "Danh mục", 624, 12, 170, out cboDanhMuc);
             AddInputField(inputCard, "Năm XB", 810, 12, 80, out txtNamXB);
-            AddInputField(inputCard, "Số lượng", 906, 12, 100, out txtSoLuong);
 
-            AddInputField(inputCard, "Chủ đề", 16, 74, 220, out txtChuDe);
-            AddInputField(inputCard, "NXB", 252, 74, 180, out txtNXB);
-            AddInputField(inputCard, "ISBN", 448, 74, 180, out txtISBN);
-            AddInputField(inputCard, "URI", 644, 74, 362, out txtURI);
+            AddInputField(inputCard, "Chủ đề", 16, 74, 200, out txtChuDe);
+            AddInputField(inputCard, "NXB", 232, 74, 170, out txtNXB);
+            AddInputField(inputCard, "ISBN", 418, 74, 170, out txtISBN);
+            AddInputField(inputCard, "Số lượng", 604, 74, 100, out txtSoLuong);
+            AddInputField(inputCard, "URI", 720, 74, 286, out txtURI);
 
             var btnThem = new RoundedButton { Text = "Thêm", Size = new Size(100, 40), Location = new Point(16, 148), ButtonColor = ThemeColors.Success, Font = ThemeColors.ButtonFont };
             btnThem.Click += (_, _) => SaveBook(false);
