@@ -24,6 +24,9 @@ namespace LibraryManagement.Forms.Panels
         private DataGridView dgvBooks = null!;
         private Panel inputCard = null!;
 
+        /// <summary>Nhấn đúp dòng lưới → mở màn quyển đầy đủ (tương đương nút quyển sách cũ).</summary>
+        public event EventHandler<string>? NavigateToFullCopyManage;
+
         public BookTitlePanel()
         {
             Dock = DockStyle.Fill;
@@ -94,6 +97,7 @@ namespace LibraryManagement.Forms.Panels
             dgvBooks.DefaultCellStyle.Padding = new Padding(6, 4, 6, 4);
             dgvBooks.AlternatingRowsDefaultCellStyle.Padding = new Padding(6, 4, 6, 4);
             dgvBooks.CellClick += DgvBooks_CellClick;
+            dgvBooks.CellDoubleClick += DgvBooks_CellDoubleClick;
             Controls.Add(dgvBooks);
 
             ReloadCategoryOptions();
@@ -110,6 +114,15 @@ namespace LibraryManagement.Forms.Panels
                 ApplyPanelLayout();
                 ApplyBookGridLayout();
             };
+        }
+
+        /// <summary>Sau khi mở từ danh mục: lọc đầu sách theo mã danh mục.</summary>
+        public void FocusCategory(string maDanhMuc)
+        {
+            if (string.IsNullOrWhiteSpace(maDanhMuc)) return;
+            ReloadCategoryOptions();
+            try { cboDanhMuc.SelectedValue = maDanhMuc; } catch { /* bind */ }
+            SearchBooksByInputs();
         }
 
         private void ApplyPanelLayout()
@@ -225,6 +238,14 @@ namespace LibraryManagement.Forms.Panels
             txtURI.Text = book.URI;
             txtSoLuong.Text = book.SoLuong.ToString();
             cboDanhMuc.SelectedValue = book.MaDanhMuc;
+        }
+
+        private void DgvBooks_CellDoubleClick(object? sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0) return;
+            string maSach = dgvBooks.Rows[e.RowIndex].Cells["MaSach"].Value?.ToString() ?? "";
+            if (string.IsNullOrWhiteSpace(maSach)) return;
+            NavigateToFullCopyManage?.Invoke(this, maSach);
         }
 
         private void SaveBook(bool isEditMode)

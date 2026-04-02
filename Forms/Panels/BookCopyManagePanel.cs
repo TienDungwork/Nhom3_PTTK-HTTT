@@ -137,6 +137,25 @@ namespace LibraryManagement.Forms.Panels
             };
         }
 
+        /// <summary>Chọn đầu sách và làm mới lưới quyển (dùng khi mở từ màn đầu sách).</summary>
+        public void SelectHeadBook(string maSach)
+        {
+            if (string.IsNullOrWhiteSpace(maSach)) return;
+            ReloadBooks();
+            try
+            {
+                if (SampleData.Books.Any(b => b.MaSach == maSach))
+                    cboSach.SelectedValue = maSach;
+            }
+            catch
+            {
+                /* ignore */
+            }
+
+            UpdateSelectedCategory();
+            SearchCopiesByInputs();
+        }
+
         private void ApplyPanelLayout()
         {
             int panelWidth = Math.Max(BaseContentWidth, ClientSize.Width - HorizontalMargin * 2);

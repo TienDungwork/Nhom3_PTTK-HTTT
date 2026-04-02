@@ -46,7 +46,7 @@ namespace LibraryManagement.Forms
 
             var menuPanel = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.SidebarBackground, AutoScroll = true };
 
-            // Một mục kho sách: danh mục → đầu sách → quyển (drill-down trong CatalogPanel; CRUD đầy đủ qua nút trên màn đó)
+            // Quản lý kho sách: danh mục + nhấn đúp để drill đầu sách → quyển (CatalogPanel)
             string[][] menuItems = {
                 new[] { "\uE80F", "Trang chủ" },
                 new[] { "\uE8C8", "Quản lý kho sách" },

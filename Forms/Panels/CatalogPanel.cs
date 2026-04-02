@@ -4,7 +4,6 @@ using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Windows.Forms;
 using LibraryManagement.Controls;
-using LibraryManagement.Forms.Dialogs;
 using LibraryManagement.Helpers;
 using LibraryManagement.Models;
 
@@ -23,7 +22,7 @@ namespace LibraryManagement.Forms.Panels
 
             var headerPanel = new Panel { Dock = DockStyle.Top, Height = 88, BackColor = ThemeColors.Background };
             headerPanel.Controls.Add(new Label { Text = "QUẢN LÝ KHO SÁCH", Font = ThemeColors.HeaderFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(32, 8), Size = new Size(520, 36), BackColor = Color.Transparent });
-            headerPanel.Controls.Add(new Label { Text = "Danh mục → đầu sách → quyển: nhấn đúp dòng trên từng lưới để mở bước tiếp. Một lần nhấp chọn dòng để sửa form bên dưới.", Font = ThemeColors.BodyFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(32, 44), Size = new Size(860, 36), BackColor = Color.Transparent });
+            headerPanel.Controls.Add(new Label { Text = "Nhấn đúp danh mục: màn đầu sách đầy đủ (theo danh mục). Trong đó nhấn đúp đầu sách: màn quyển đầy đủ. Một lần nhấp danh mục: sửa form bên dưới.", Font = ThemeColors.BodyFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(32, 44), Size = new Size(900, 36), BackColor = Color.Transparent });
 
             var inputCard = new Panel { BackColor = Color.White };
             inputCard.Paint += (s, e) =>
@@ -117,8 +116,38 @@ namespace LibraryManagement.Forms.Panels
             var category = SampleData.BookCategories.FirstOrDefault(c => c.MaDanhMuc == maDanhMuc);
             if (category == null) return;
 
-            using var dlg = new BookTitleDrillDownDialog(category.MaDanhMuc, category.TenDanhMuc);
-            dlg.ShowDialog(FindForm());
+            var owner = FindForm();
+            using var f = new Form
+            {
+                Text = $"Quản lý đầu sách — {category.TenDanhMuc}",
+                Size = new Size(1100, 720),
+                StartPosition = FormStartPosition.CenterParent,
+                BackColor = ThemeColors.Background,
+                MinimumSize = new Size(900, 560)
+            };
+            if (owner != null) f.Icon = owner.Icon;
+
+            var titles = new BookTitlePanel { Dock = DockStyle.Fill };
+            titles.FocusCategory(category.MaDanhMuc);
+            titles.NavigateToFullCopyManage += (_, maSach) =>
+            {
+                using var fCopy = new Form
+                {
+                    Text = "Quản lý sách (quyển)",
+                    Size = new Size(1100, 720),
+                    StartPosition = FormStartPosition.CenterParent,
+                    BackColor = ThemeColors.Background,
+                    MinimumSize = new Size(900, 560)
+                };
+                if (owner != null) fCopy.Icon = owner.Icon;
+                var copies = new BookCopyManagePanel { Dock = DockStyle.Fill };
+                fCopy.Controls.Add(copies);
+                fCopy.Shown += (_, _) => copies.SelectHeadBook(maSach);
+                fCopy.ShowDialog(f);
+            };
+
+            f.Controls.Add(titles);
+            f.ShowDialog(owner);
         }
 
         private void AddInputField(Panel parent, string label, int x, int y, int width, out TextBox textBox)
