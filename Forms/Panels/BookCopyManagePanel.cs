@@ -141,6 +141,13 @@ namespace LibraryManagement.Forms.Panels
         public void SelectHeadBook(string maSach)
         {
             if (string.IsNullOrWhiteSpace(maSach)) return;
+            // Xóa mã quyển tự sinh trong form — nếu không, Tìm kiếm lọc theo mã không tồn tại → lưới trống
+            txtMaQuyen.Clear();
+            txtNhaCungCap.Clear();
+            txtGhiChu.Clear();
+            dtpNgayNhap.Checked = false;
+            if (cboTrangThai.Items.Count > 0) cboTrangThai.SelectedIndex = 0;
+
             ReloadBooks();
             try
             {
@@ -275,9 +282,13 @@ namespace LibraryManagement.Forms.Panels
             bool locNgayNhap = dtpNgayNhap.Checked;
             var ngayNhap = dtpNgayNhap.Value.Date;
 
+            // Chỉ lọc theo mã quyển nếu có ít nhất một quyển khớp (tránh mã tự sinh trong form làm lưới trống)
+            bool locTheoMaQuyen = !string.IsNullOrWhiteSpace(maQuyen) &&
+                SampleData.BookCopies.Any(c => c.MaQuyenSach.Contains(maQuyen, StringComparison.OrdinalIgnoreCase));
+
             var copies = SampleData.BookCopies
                 .Where(c =>
-                    (string.IsNullOrWhiteSpace(maQuyen) || c.MaQuyenSach.Contains(maQuyen, StringComparison.OrdinalIgnoreCase)) &&
+                    (!locTheoMaQuyen || c.MaQuyenSach.Contains(maQuyen, StringComparison.OrdinalIgnoreCase)) &&
                     (string.IsNullOrWhiteSpace(maSach) || c.MaSach == maSach) &&
                     (string.IsNullOrWhiteSpace(danhMuc) || LibraryDataService.GetBookCategoryName(c.MaSach).Contains(danhMuc, StringComparison.OrdinalIgnoreCase)) &&
                     (string.IsNullOrWhiteSpace(nhaCungCap) || c.NhaCungCap.Contains(nhaCungCap, StringComparison.OrdinalIgnoreCase)) &&
