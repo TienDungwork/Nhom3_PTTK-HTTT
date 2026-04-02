@@ -21,17 +21,9 @@ namespace LibraryManagement.Forms.Panels
             Dock = DockStyle.Fill;
             BackColor = ThemeColors.Background;
 
-            var headerPanel = new Panel { Dock = DockStyle.Top, Height = 118, BackColor = ThemeColors.Background };
+            var headerPanel = new Panel { Dock = DockStyle.Top, Height = 88, BackColor = ThemeColors.Background };
             headerPanel.Controls.Add(new Label { Text = "QUẢN LÝ KHO SÁCH", Font = ThemeColors.HeaderFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(32, 8), Size = new Size(520, 36), BackColor = Color.Transparent });
             headerPanel.Controls.Add(new Label { Text = "Danh mục → đầu sách → quyển: nhấn đúp dòng trên từng lưới để mở bước tiếp. Một lần nhấp chọn dòng để sửa form bên dưới.", Font = ThemeColors.BodyFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(32, 44), Size = new Size(860, 36), BackColor = Color.Transparent });
-
-            var btnFullTitles = new RoundedButton { Text = "Đầu sách (màn đầy đủ)", Size = new Size(200, 36), Location = new Point(32, 78), ButtonColor = ThemeColors.Primary, Font = ThemeColors.ButtonFont };
-            btnFullTitles.Click += (_, _) => ShowEmbeddedPanelDialog("Quản lý đầu sách", new BookTitlePanel());
-            headerPanel.Controls.Add(btnFullTitles);
-
-            var btnFullCopies = new RoundedButton { Text = "Quyển sách (màn đầy đủ)", Size = new Size(210, 36), Location = new Point(244, 78), ButtonColor = ThemeColors.Primary, Font = ThemeColors.ButtonFont };
-            btnFullCopies.Click += (_, _) => ShowEmbeddedPanelDialog("Quản lý sách (quyển)", new BookCopyManagePanel());
-            headerPanel.Controls.Add(btnFullCopies);
 
             var inputCard = new Panel { BackColor = Color.White };
             inputCard.Paint += (s, e) =>
@@ -259,23 +251,6 @@ namespace LibraryManagement.Forms.Panels
             txtMoTa.Clear();
             txtViTriKe.Clear();
             chkDangSuDung.Checked = true;
-        }
-
-        private void ShowEmbeddedPanelDialog(string title, UserControl content)
-        {
-            var owner = FindForm();
-            using var f = new Form
-            {
-                Text = title,
-                Size = new Size(1100, 720),
-                StartPosition = FormStartPosition.CenterParent,
-                BackColor = ThemeColors.Background,
-                MinimumSize = new Size(900, 560)
-            };
-            if (owner != null) f.Icon = owner.Icon;
-            content.Dock = DockStyle.Fill;
-            f.Controls.Add(content);
-            f.ShowDialog(owner);
         }
     }
 }
