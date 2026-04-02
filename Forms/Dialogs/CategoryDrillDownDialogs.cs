@@ -43,7 +43,7 @@ namespace LibraryManagement.Forms.Dialogs
             });
             header.Controls.Add(new Label
             {
-                Text = "Nhấp một đầu sách để mở danh sách quyển sách (hoặc nhấn Enter khi đang chọn dòng)",
+                Text = "Nhấn đúp một đầu sách để mở danh sách quyển",
                 Font = ThemeColors.BodyFont,
                 ForeColor = ThemeColors.TextSecondary,
                 Location = new Point(18, 46),
@@ -64,8 +64,7 @@ namespace LibraryManagement.Forms.Dialogs
             ModernDataGridView.ApplyStyle(dgvTitles);
             dgvTitles.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvTitles.MultiSelect = false;
-            dgvTitles.CellClick += DgvTitles_CellClick;
-            dgvTitles.KeyDown += DgvTitles_KeyDown;
+            dgvTitles.CellDoubleClick += DgvTitles_CellDoubleClick;
             dgvTitles.ScrollBars = ScrollBars.Both;
             dgvTitles.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvTitles.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None;
@@ -87,16 +86,7 @@ namespace LibraryManagement.Forms.Dialogs
             }
         }
 
-        private void DgvTitles_KeyDown(object? sender, KeyEventArgs e)
-        {
-            if (e.KeyCode != Keys.Enter) return;
-            if (dgvTitles.CurrentRow == null || dgvTitles.CurrentRow.Index < 0) return;
-            e.Handled = true;
-            e.SuppressKeyPress = true;
-            OpenCopiesForRow(dgvTitles.CurrentRow.Index);
-        }
-
-        private void DgvTitles_CellClick(object? sender, DataGridViewCellEventArgs e)
+        private void DgvTitles_CellDoubleClick(object? sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
             OpenCopiesForRow(e.RowIndex);
@@ -150,7 +140,7 @@ namespace LibraryManagement.Forms.Dialogs
             });
             header.Controls.Add(new Label
             {
-                Text = "Danh sách quyển — nhấp một quyển để xem chi tiết (hoặc Enter khi đang chọn dòng)",
+                Text = "Danh sách quyển — nhấn đúp một quyển để xem chi tiết",
                 Font = ThemeColors.BodyFont,
                 ForeColor = ThemeColors.TextSecondary,
                 Location = new Point(18, 46),
@@ -168,8 +158,7 @@ namespace LibraryManagement.Forms.Dialogs
             ModernDataGridView.ApplyStyle(dgvCopies);
             dgvCopies.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvCopies.MultiSelect = false;
-            dgvCopies.CellClick += DgvCopies_CellClick;
-            dgvCopies.KeyDown += DgvCopies_KeyDown;
+            dgvCopies.CellDoubleClick += DgvCopies_CellDoubleClick;
             dgvCopies.ScrollBars = ScrollBars.Both;
             dgvCopies.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvCopies.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None;
@@ -191,16 +180,7 @@ namespace LibraryManagement.Forms.Dialogs
             }
         }
 
-        private void DgvCopies_KeyDown(object? sender, KeyEventArgs e)
-        {
-            if (e.KeyCode != Keys.Enter) return;
-            if (dgvCopies.CurrentRow == null || dgvCopies.CurrentRow.Index < 0) return;
-            e.Handled = true;
-            e.SuppressKeyPress = true;
-            OpenCopyDetailForRow(dgvCopies.CurrentRow.Index);
-        }
-
-        private void DgvCopies_CellClick(object? sender, DataGridViewCellEventArgs e)
+        private void DgvCopies_CellDoubleClick(object? sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
             OpenCopyDetailForRow(e.RowIndex);

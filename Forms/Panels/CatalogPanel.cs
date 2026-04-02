@@ -15,7 +15,6 @@ namespace LibraryManagement.Forms.Panels
         private TextBox txtMaDanhMuc = null!, txtTenDanhMuc = null!, txtMoTa = null!, txtViTriKe = null!;
         private CheckBox chkDangSuDung = null!;
         private DataGridView dgvCategories = null!;
-        private RoundedButton btnOpenCategoryDrill = null!;
 
         public CatalogPanel()
         {
@@ -24,7 +23,7 @@ namespace LibraryManagement.Forms.Panels
 
             var headerPanel = new Panel { Dock = DockStyle.Top, Height = 118, BackColor = ThemeColors.Background };
             headerPanel.Controls.Add(new Label { Text = "QUẢN LÝ KHO SÁCH", Font = ThemeColors.HeaderFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(32, 8), Size = new Size(520, 36), BackColor = Color.Transparent });
-            headerPanel.Controls.Add(new Label { Text = "Bước 1: chọn danh mục trong lưới bên dưới → mở đầu sách → trong đầu sách chọn quyển → xem chi tiết. Form phía dưới dùng để thêm/sửa danh mục.", Font = ThemeColors.BodyFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(32, 44), Size = new Size(860, 36), BackColor = Color.Transparent });
+            headerPanel.Controls.Add(new Label { Text = "Danh mục → đầu sách → quyển: nhấn đúp dòng trên từng lưới để mở bước tiếp. Một lần nhấp chọn dòng để sửa form bên dưới.", Font = ThemeColors.BodyFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(32, 44), Size = new Size(860, 36), BackColor = Color.Transparent });
 
             var btnFullTitles = new RoundedButton { Text = "Đầu sách (màn đầy đủ)", Size = new Size(200, 36), Location = new Point(32, 78), ButtonColor = ThemeColors.Primary, Font = ThemeColors.ButtonFont };
             btnFullTitles.Click += (_, _) => ShowEmbeddedPanelDialog("Quản lý đầu sách", new BookTitlePanel());
@@ -87,25 +86,13 @@ namespace LibraryManagement.Forms.Panels
             var gridToolbar = new Panel { Dock = DockStyle.Top, Height = 44, BackColor = ThemeColors.Background };
             gridToolbar.Controls.Add(new Label
             {
-                Text = "Danh mục sách (hiển thị trước)",
+                Text = "Danh mục sách — nhấn đúp một dòng để xem đầu sách",
                 Font = ThemeColors.HeaderFont,
                 ForeColor = ThemeColors.TextPrimary,
                 Location = new Point(0, 8),
                 AutoSize = true,
                 BackColor = Color.Transparent
             });
-
-            btnOpenCategoryDrill = new RoundedButton
-            {
-                Text = "Mở đầu sách trong danh mục đã chọn",
-                Size = new Size(300, 34),
-                Location = new Point(320, 4),
-                ButtonColor = ThemeColors.Primary,
-                Font = ThemeColors.ButtonFont,
-                Enabled = false
-            };
-            btnOpenCategoryDrill.Click += (_, _) => OpenCategoryDrillDown();
-            gridToolbar.Controls.Add(btnOpenCategoryDrill);
 
             dgvCategories = new DataGridView { Dock = DockStyle.Fill };
             dgvCategories.Columns.Add("MaDanhMuc", "Mã danh mục");
@@ -119,8 +106,6 @@ namespace LibraryManagement.Forms.Panels
             dgvCategories.MultiSelect = false;
             dgvCategories.CellClick += DgvCategories_CellClick;
             dgvCategories.CellDoubleClick += DgvCategories_CellDoubleClick;
-            dgvCategories.SelectionChanged += DgvCategories_SelectionChanged;
-            dgvCategories.KeyDown += DgvCategories_KeyDown;
 
             gridHost.Controls.Add(gridToolbar);
             gridHost.Controls.Add(dgvCategories);
@@ -130,29 +115,12 @@ namespace LibraryManagement.Forms.Panels
             Controls.Add(gridHost);
 
             LoadCategories();
-            UpdateOpenDrillButtonState();
         }
 
-        private void DgvCategories_KeyDown(object? sender, KeyEventArgs e)
+        private void OpenCategoryDrillDown(int rowIndex)
         {
-            if (e.KeyCode != Keys.Enter) return;
-            if (dgvCategories.CurrentRow == null || dgvCategories.CurrentRow.Index < 0) return;
-            e.Handled = true;
-            e.SuppressKeyPress = true;
-            OpenCategoryDrillDown();
-        }
-
-        private void DgvCategories_SelectionChanged(object? sender, EventArgs e) => UpdateOpenDrillButtonState();
-
-        private void UpdateOpenDrillButtonState()
-        {
-            btnOpenCategoryDrill.Enabled = dgvCategories.CurrentRow != null && dgvCategories.CurrentRow.Index >= 0;
-        }
-
-        private void OpenCategoryDrillDown()
-        {
-            if (dgvCategories.CurrentRow == null || dgvCategories.CurrentRow.Index < 0) return;
-            string maDanhMuc = dgvCategories.CurrentRow.Cells["MaDanhMuc"].Value?.ToString() ?? "";
+            if (rowIndex < 0 || rowIndex >= dgvCategories.Rows.Count) return;
+            string maDanhMuc = dgvCategories.Rows[rowIndex].Cells["MaDanhMuc"].Value?.ToString() ?? "";
             if (string.IsNullOrWhiteSpace(maDanhMuc)) return;
             var category = SampleData.BookCategories.FirstOrDefault(c => c.MaDanhMuc == maDanhMuc);
             if (category == null) return;
@@ -239,7 +207,7 @@ namespace LibraryManagement.Forms.Panels
         private void DgvCategories_CellDoubleClick(object? sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
-            OpenCategoryDrillDown();
+            OpenCategoryDrillDown(e.RowIndex);
         }
 
         private void SaveCategory(bool isEditMode)
