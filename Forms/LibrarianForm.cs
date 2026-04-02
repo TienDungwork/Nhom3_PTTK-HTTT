@@ -46,11 +46,10 @@ namespace LibraryManagement.Forms
 
             var menuPanel = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.SidebarBackground, AutoScroll = true };
 
+            // Một mục kho sách: danh mục → đầu sách → quyển (drill-down trong CatalogPanel; CRUD đầy đủ qua nút trên màn đó)
             string[][] menuItems = {
                 new[] { "\uE80F", "Trang chủ" },
-                new[] { "\uE736", "Quản lý đầu sách" },
-                new[] { "\uE81C", "Quản lý sách" },
-                new[] { "\uE8C8", "Quản lý danh mục sách" },
+                new[] { "\uE8C8", "Quản lý kho sách" },
                 new[] { "\uE721", "Tra cứu & phân loại" },
                 new[] { "\uE762", "Quản lý mượn trả" },
                 new[] { "\uE716", "Quản lý độc giả" },
@@ -115,14 +114,12 @@ namespace LibraryManagement.Forms
             UserControl panel = index switch
             {
                 0 => new LibrarianDashboard(),
-                1 => new BookTitlePanel(),
-                2 => new BookCopyManagePanel(),
-                3 => new CatalogPanel(),
-                4 => new ClassifyPanel(),
-                5 => new BorrowManagePanel(),
-                6 => new ReaderManagePanel(),
-                7 => new OverduePanel(),
-                8 => new ReportPanel(),
+                1 => new CatalogPanel(),
+                2 => new ClassifyPanel(),
+                3 => new BorrowManagePanel(),
+                4 => new ReaderManagePanel(),
+                5 => new OverduePanel(),
+                6 => new ReportPanel(),
                 _ => new LibrarianDashboard()
             };
             panel.Dock = DockStyle.Fill;
