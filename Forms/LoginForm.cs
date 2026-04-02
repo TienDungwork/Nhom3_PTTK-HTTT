@@ -173,8 +173,8 @@ namespace LibraryManagement.Forms
 
         private void BtnLogin_Click(object? sender, EventArgs e)
         {
-            string username = txtUsername.Text.Trim();
-            string password = txtPassword.Text.Trim();
+            string username = (txtUsername.Text ?? "").Trim();
+            string password = (txtPassword.Text ?? "").Trim();
 
             if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
             {
@@ -182,14 +182,14 @@ namespace LibraryManagement.Forms
                 return;
             }
 
-            var user = UserStore.Login(username, password);
-            if (user == null)
+            var result = UserStore.Login(username, password);
+            if (!result.Success || result.User == null)
             {
-                ShowError("Mã người dùng hoặc mật khẩu không đúng!");
+                ShowError(result.Message);
                 return;
             }
 
-            UserStore.CurrentUser = user;
+            UserStore.CurrentUser = result.User;
 
             DialogResult = DialogResult.OK;
             Close();

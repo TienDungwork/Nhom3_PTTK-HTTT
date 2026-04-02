@@ -1,6 +1,13 @@
 PRAGMA foreign_keys = ON;
 
 DROP TABLE IF EXISTS notifications;
+DROP TABLE IF EXISTS audit_logs;
+DROP TABLE IF EXISTS role_permissions;
+DROP TABLE IF EXISTS notification_templates;
+DROP TABLE IF EXISTS feature_toggles;
+DROP TABLE IF EXISTS system_settings;
+DROP TABLE IF EXISTS inventory_check_items;
+DROP TABLE IF EXISTS inventory_sessions;
 DROP TABLE IF EXISTS borrow_records;
 DROP TABLE IF EXISTS borrow_requests;
 DROP TABLE IF EXISTS book_copies;
@@ -23,11 +30,17 @@ CREATE TABLE app_users (
     ma_doc_gia TEXT,
     username TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
+    password_hash TEXT NOT NULL DEFAULT '',
+    password_salt TEXT NOT NULL DEFAULT '',
     ho_ten TEXT NOT NULL,
     email TEXT NOT NULL DEFAULT '',
     sdt TEXT NOT NULL DEFAULT '',
     role TEXT NOT NULL CHECK (role IN ('Admin', 'ThuThu', 'DocGia')),
     is_active INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
+    failed_login_count INTEGER NOT NULL DEFAULT 0,
+    locked_until TEXT,
+    last_active_at TEXT,
+    employment_status TEXT NOT NULL DEFAULT 'Dang lam',
     ngay_tao TEXT NOT NULL,
     FOREIGN KEY (ma_doc_gia) REFERENCES readers(ma_doc_gia)
 );
@@ -115,11 +128,67 @@ CREATE TABLE notifications (
     ma_thong_bao TEXT PRIMARY KEY,
     ma_doc_gia TEXT NOT NULL,
     nguoi_gui TEXT NOT NULL DEFAULT 'Thu thu',
+    loai_thong_bao TEXT NOT NULL DEFAULT 'HeThong',
     tieu_de TEXT NOT NULL,
     noi_dung TEXT NOT NULL,
     thoi_gian TEXT NOT NULL,
     da_doc INTEGER NOT NULL DEFAULT 0 CHECK (da_doc IN (0, 1)),
     FOREIGN KEY (ma_doc_gia) REFERENCES readers(ma_doc_gia)
+);
+
+CREATE TABLE inventory_sessions (
+    ma_dot_kiem_ke TEXT PRIMARY KEY,
+    ten_dot TEXT NOT NULL,
+    thoi_gian_tao TEXT NOT NULL,
+    nguoi_tao TEXT NOT NULL DEFAULT '',
+    ghi_chu TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE inventory_check_items (
+    ma_dot_kiem_ke TEXT NOT NULL,
+    ma_quyen_sach TEXT NOT NULL,
+    ma_sach TEXT NOT NULL,
+    ten_sach TEXT NOT NULL,
+    trang_thai_he_thong TEXT NOT NULL,
+    trang_thai_thuc_te TEXT NOT NULL,
+    ghi_chu TEXT NOT NULL DEFAULT '',
+    PRIMARY KEY (ma_dot_kiem_ke, ma_quyen_sach),
+    FOREIGN KEY (ma_dot_kiem_ke) REFERENCES inventory_sessions(ma_dot_kiem_ke),
+    FOREIGN KEY (ma_quyen_sach) REFERENCES book_copies(ma_quyen_sach),
+    FOREIGN KEY (ma_sach) REFERENCES books(ma_sach)
+);
+
+CREATE TABLE system_settings (
+    setting_key TEXT PRIMARY KEY,
+    setting_value TEXT NOT NULL
+);
+
+CREATE TABLE feature_toggles (
+    feature_key TEXT PRIMARY KEY,
+    enabled INTEGER NOT NULL DEFAULT 1 CHECK (enabled IN (0, 1))
+);
+
+CREATE TABLE notification_templates (
+    template_key TEXT PRIMARY KEY,
+    enabled INTEGER NOT NULL DEFAULT 1 CHECK (enabled IN (0, 1)),
+    content TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE role_permissions (
+    role TEXT NOT NULL,
+    module TEXT NOT NULL,
+    action TEXT NOT NULL,
+    allowed INTEGER NOT NULL DEFAULT 1 CHECK (allowed IN (0, 1)),
+    PRIMARY KEY (role, module, action)
+);
+
+CREATE TABLE audit_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    thoi_gian TEXT NOT NULL,
+    nguoi_dung TEXT NOT NULL,
+    hanh_dong TEXT NOT NULL,
+    chi_tiet TEXT NOT NULL DEFAULT '',
+    loai_su_kien TEXT NOT NULL DEFAULT 'System'
 );
 
 CREATE INDEX idx_books_ten_sach ON books(ten_sach);
@@ -134,6 +203,8 @@ CREATE INDEX idx_borrow_ma_sach ON borrow_records(ma_sach);
 CREATE INDEX idx_borrow_ma_quyen_sach ON borrow_records(ma_quyen_sach);
 CREATE INDEX idx_borrow_trang_thai ON borrow_records(trang_thai);
 CREATE INDEX idx_notifications_ma_doc_gia ON notifications(ma_doc_gia);
+CREATE INDEX idx_notifications_loai ON notifications(loai_thong_bao);
+CREATE INDEX idx_inventory_item_dot ON inventory_check_items(ma_dot_kiem_ke);
 CREATE UNIQUE INDEX idx_borrow_open_copy ON borrow_records(ma_quyen_sach) WHERE trang_thai = 'Dang muon';
 CREATE UNIQUE INDEX idx_user_docgia ON app_users(ma_doc_gia) WHERE ma_doc_gia IS NOT NULL;
 
@@ -175,6 +246,37 @@ INSERT INTO borrow_records (ma_muon, ma_yeu_cau, ma_doc_gia, ten_doc_gia, ma_sac
 ('M001', NULL, 'DG001', 'Nguyen Van Minh', 'S001', 'Q001', 'Lap trinh C# co ban', 1, '2026-03-01', '2026-03-15', NULL, 'Dang muon', 0, 0),
 ('M002', NULL, 'DG002', 'Tran Thi Lan', 'S002', 'Q004', 'Cau truc du lieu va giai thuat', 1, '2026-03-03', '2026-03-17', NULL, 'Dang muon', 0, 0);
 
-INSERT INTO notifications (ma_thong_bao, ma_doc_gia, nguoi_gui, tieu_de, noi_dung, thoi_gian, da_doc) VALUES
-('TB001', 'DG001', 'He thong', 'Sap den han tra sach', 'Sach Lap trinh C# co ban se den han trong 2 ngay.', '2026-03-24 08:00:00', 0),
-('TB002', 'DG002', 'Thu thu', 'Nhac nho tra sach', 'Vui long kiem tra va tra sach dung han.', '2026-03-23 15:00:00', 0);
+INSERT INTO notifications (ma_thong_bao, ma_doc_gia, nguoi_gui, loai_thong_bao, tieu_de, noi_dung, thoi_gian, da_doc) VALUES
+('TB001', 'DG001', 'He thong', 'NhacHan', 'Sap den han tra sach', 'Sach Lap trinh C# co ban se den han trong 2 ngay.', '2026-03-24 08:00:00', 0),
+('TB002', 'DG002', 'Thu thu', 'QuaHan', 'Nhac nho tra sach', 'Vui long kiem tra va tra sach dung han.', '2026-03-23 15:00:00', 0);
+
+INSERT INTO system_settings (setting_key, setting_value) VALUES
+('max_borrow_books', '5'),
+('default_borrow_days', '14'),
+('late_fee_per_day', '5000'),
+('max_overdue_days', '30'),
+('library_name', 'Thu vien Dai hoc Thuy Loi'),
+('library_contact', 'library@tlu.edu.vn');
+
+INSERT INTO feature_toggles (feature_key, enabled) VALUES
+('borrow_request', 1),
+('inventory_check', 1),
+('auto_notify', 1);
+
+INSERT INTO notification_templates (template_key, enabled, content) VALUES
+('approved', 1, 'Yeu cau muon cua ban da duoc duyet.'),
+('rejected', 1, 'Yeu cau muon cua ban da bi tu choi.'),
+('overdue', 1, 'Ban co sach dang qua han, vui long xu ly som.');
+
+INSERT INTO role_permissions (role, module, action, allowed) VALUES
+('Admin', 'Accounts', 'View', 1),
+('Admin', 'Accounts', 'Edit', 1),
+('Admin', 'Reports', 'View', 1),
+('Admin', 'Settings', 'Edit', 1),
+('ThuThu', 'Reports', 'View', 1),
+('ThuThu', 'Accounts', 'View', 0),
+('DocGia', 'Reports', 'View', 0);
+
+INSERT INTO audit_logs (thoi_gian, nguoi_dung, hanh_dong, chi_tiet, loai_su_kien) VALUES
+('2026-03-24 10:00:00', 'Nguyen Quan Tri', 'Dang nhap', 'Dang nhap thanh cong', 'Auth'),
+('2026-03-24 10:10:00', 'Tran Thi Thu Thu', 'Dang nhap that bai', 'Sai mat khau', 'Auth');

@@ -61,6 +61,7 @@ namespace LibraryManagement.Forms.Panels
 
             // DGV
             dgv = new DataGridView { Location = new Point(32, 156), Size = new Size(920, 490), Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom };
+            dgv.Columns.Add("MaTK", "Mã người dùng");
             dgv.Columns.Add("Username", "Tên đăng nhập");
             dgv.Columns.Add("HoTen", "Họ tên");
             dgv.Columns.Add("Role", "Vai trò");
@@ -69,6 +70,14 @@ namespace LibraryManagement.Forms.Panels
             dgv.Columns.Add("IsActive", "Trạng thái");
             ModernDataGridView.ApplyStyle(dgv);
             dgv.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgv.CellDoubleClick += (_, e) =>
+            {
+                if (e.RowIndex >= 0)
+                {
+                    var u = GetSelectedUser();
+                    if (u != null) ShowUserDetail(u);
+                }
+            };
             LoadAccounts();
             Controls.Add(dgv);
         }
@@ -79,7 +88,7 @@ namespace LibraryManagement.Forms.Panels
             foreach (var u in UserStore.Users)
             {
                 string status = u.IsActive ? "Hoạt động" : "Bị khóa";
-                int rowIdx = dgv.Rows.Add(u.Username, u.HoTen, u.RoleDisplay, u.Email, u.SDT, status);
+                int rowIdx = dgv.Rows.Add(u.MaTK, u.Username, u.HoTen, u.RoleDisplay, u.Email, u.SDT, status);
                 if (!u.IsActive)
                 {
                     dgv.Rows[rowIdx].DefaultCellStyle.ForeColor = ThemeColors.TextMuted;
@@ -101,7 +110,7 @@ namespace LibraryManagement.Forms.Panels
             foreach (var u in filtered)
             {
                 string status = u.IsActive ? "Hoạt động" : "Bị khóa";
-                int rowIdx = dgv.Rows.Add(u.Username, u.HoTen, u.RoleDisplay, u.Email, u.SDT, status);
+                int rowIdx = dgv.Rows.Add(u.MaTK, u.Username, u.HoTen, u.RoleDisplay, u.Email, u.SDT, status);
                 if (!u.IsActive)
                 {
                     dgv.Rows[rowIdx].DefaultCellStyle.ForeColor = ThemeColors.TextMuted;
@@ -141,7 +150,18 @@ namespace LibraryManagement.Forms.Panels
                 if (string.IsNullOrWhiteSpace(txtUser.Text) || string.IsNullOrWhiteSpace(txtPass.Text)) { MessageBox.Show("Vui lòng điền đầy đủ!"); return; }
                 if (UserStore.Users.Any(u => u.Username == txtUser.Text.Trim())) { MessageBox.Show("Tên đăng nhập đã tồn tại!"); return; }
                 UserRole role = cboRole.SelectedIndex switch { 0 => UserRole.Admin, 1 => UserRole.ThuThu, _ => UserRole.DocGia };
-                UserStore.Users.Add(new AppUser { Username = txtUser.Text.Trim(), Password = txtPass.Text, HoTen = txtName.Text.Trim(), Role = role });
+                var pass = PasswordHasher.HashPassword(txtPass.Text);
+                UserStore.Users.Add(new AppUser
+                {
+                    MaTK = "TK" + (UserStore.Users.Count + 1).ToString("D3"),
+                    Username = txtUser.Text.Trim(),
+                    Password = "",
+                    PasswordHash = pass.Hash,
+                    PasswordSalt = pass.Salt,
+                    HoTen = txtName.Text.Trim(),
+                    Role = role
+                });
+                UserStore.AddLog(UserStore.CurrentUser?.HoTen ?? "Admin", "Tạo tài khoản", $"Tạo tài khoản {txtUser.Text.Trim()}", "Security");
                 MessageBox.Show("Thêm tài khoản thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 dlg.Close();
             };
@@ -185,6 +205,7 @@ namespace LibraryManagement.Forms.Panels
             if (MessageBox.Show($"Bạn có chắc chắn muốn xóa tài khoản \"{user.Username}\"?", "Xác nhận xóa", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
             {
                 UserStore.Users.Remove(user);
+                UserStore.AddLog(UserStore.CurrentUser?.HoTen ?? "Admin", "Xóa tài khoản", $"Xóa tài khoản {user.Username}", "Security");
                 MessageBox.Show("Xóa tài khoản thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 LoadAccounts();
             }
@@ -196,6 +217,7 @@ namespace LibraryManagement.Forms.Panels
             if (user == null) return;
             user.IsActive = !user.IsActive;
             string status = user.IsActive ? "mở khóa" : "khóa";
+            UserStore.AddLog(UserStore.CurrentUser?.HoTen ?? "Admin", user.IsActive ? "Mở khóa tài khoản" : "Khóa tài khoản", user.Username, "Security");
             MessageBox.Show($"Đã {status} tài khoản \"{user.Username}\"!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
             LoadAccounts();
         }
@@ -214,11 +236,50 @@ namespace LibraryManagement.Forms.Panels
             btnSave.Click += (s2, e2) =>
             {
                 if (string.IsNullOrWhiteSpace(txtNewPass.Text)) { MessageBox.Show("Vui lòng nhập mật khẩu mới!"); return; }
-                user.Password = txtNewPass.Text;
+                UserStore.SetPassword(user.Username, txtNewPass.Text);
                 MessageBox.Show("Đổi mật khẩu thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 dlg.Close();
             };
             dlg.Controls.Add(btnSave);
+            dlg.ShowDialog(FindForm());
+        }
+
+        private void ShowUserDetail(AppUser user)
+        {
+            using var dlg = new Form
+            {
+                Text = $"Chi tiết tài khoản - {user.Username}",
+                Size = new Size(560, 360),
+                StartPosition = FormStartPosition.CenterParent,
+                BackColor = Color.White
+            };
+            int y = 20;
+            void AddRow(string k, string v)
+            {
+                dlg.Controls.Add(new Label { Text = k, Location = new Point(20, y), Size = new Size(200, 22), Font = ThemeColors.BodyFont });
+                dlg.Controls.Add(new Label { Text = v, Location = new Point(220, y), Size = new Size(300, 22), Font = ThemeColors.BodyFont, ForeColor = ThemeColors.TextSecondary });
+                y += 28;
+            }
+
+            AddRow("Mã người dùng", user.MaTK);
+            AddRow("Họ tên", user.HoTen);
+            AddRow("Email", user.Email);
+            AddRow("Vai trò", user.RoleDisplay);
+            AddRow("Trạng thái", user.IsActive ? "Hoạt động" : "Không hoạt động");
+            AddRow("Hoạt động gần nhất", user.LastActiveAt?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa có");
+
+            if (user.Role == UserRole.ThuThu)
+            {
+                AddRow("Trạng thái làm việc", user.EmploymentStatus);
+            }
+            else if (user.Role == UserRole.DocGia)
+            {
+                var ov = LibraryDataService.GetReaderBorrowOverview(user.MaDocGia);
+                AddRow("Đang mượn / Đã trả", $"{ov.DangMuon} / {ov.DaTra}");
+                AddRow("Có quá hạn", ov.CoQuaHan ? "Có" : "Không");
+                AddRow("Đã nộp phạt", ov.DaNopPhatDayDu ? "Đầy đủ" : "Chưa đầy đủ");
+            }
+
             dlg.ShowDialog(FindForm());
         }
     }

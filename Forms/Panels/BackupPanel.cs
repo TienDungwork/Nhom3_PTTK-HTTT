@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.IO;
 using System.Windows.Forms;
 using LibraryManagement.Controls;
 using LibraryManagement.Helpers;
@@ -40,7 +41,14 @@ namespace LibraryManagement.Forms.Panels
             var btnBackup = new RoundedButton { Text = "🔄 Sao lưu ngay", Size = new Size(200, 48), Location = new Point(20, 166), ButtonColor = ColorTranslator.FromHtml("#8B5CF6"), Font = new Font("Segoe UI Semibold", 11) };
             btnBackup.Click += (s, e) =>
             {
-                UserStore.Logs.Insert(0, new ActivityLog { ThoiGian = DateTime.Now, NguoiDung = UserStore.CurrentUser?.HoTen ?? "Admin", HanhDong = "Sao lưu CSDL", ChiTiet = "Sao lưu thành công" });
+                using var save = new SaveFileDialog { Filter = "SQLite/SQL backup (*.db;*.sql)|*.db;*.sql", FileName = $"library_backup_{DateTime.Now:yyyyMMdd_HHmm}.db" };
+                if (save.ShowDialog(FindForm()) != DialogResult.OK) return;
+                string workspace = AppDomain.CurrentDomain.BaseDirectory;
+                string dbFile = Path.Combine(workspace, "database", "library_management.db");
+                string sqlFile = Path.Combine(workspace, "database", "library_management.sql");
+                string source = File.Exists(dbFile) ? dbFile : sqlFile;
+                File.Copy(source, save.FileName, true);
+                UserStore.AddLog(UserStore.CurrentUser?.HoTen ?? "Admin", "Sao lưu CSDL", $"Sao lưu vào {save.FileName}", "System");
                 MessageBox.Show("Sao lưu cơ sở dữ liệu thành công!", "Sao lưu", MessageBoxButtons.OK, MessageBoxIcon.Information);
             };
             backupCard.Controls.Add(btnBackup);
@@ -68,8 +76,15 @@ namespace LibraryManagement.Forms.Panels
             var btnRestore = new RoundedButton { Text = "📂 Chọn file sao lưu", Size = new Size(200, 48), Location = new Point(20, 160), ButtonColor = ThemeColors.Warning, Font = new Font("Segoe UI Semibold", 11) };
             btnRestore.Click += (s, e) =>
             {
+                using var open = new OpenFileDialog { Filter = "SQLite/SQL backup (*.db;*.sql)|*.db;*.sql" };
+                if (open.ShowDialog(FindForm()) != DialogResult.OK) return;
                 var result = MessageBox.Show("Bạn có chắc chắn muốn phục hồi dữ liệu?\nDữ liệu hiện tại sẽ bị ghi đè!", "Phục hồi", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
-                if (result == DialogResult.Yes) MessageBox.Show("Phục hồi dữ liệu thành công!", "Phục hồi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                if (result != DialogResult.Yes) return;
+                string workspace = AppDomain.CurrentDomain.BaseDirectory;
+                string target = Path.Combine(workspace, "database", Path.GetExtension(open.FileName).Equals(".sql", StringComparison.OrdinalIgnoreCase) ? "library_management.sql" : "library_management.db");
+                File.Copy(open.FileName, target, true);
+                UserStore.AddLog(UserStore.CurrentUser?.HoTen ?? "Admin", "Phục hồi CSDL", $"Phục hồi từ {open.FileName}", "System");
+                MessageBox.Show("Phục hồi dữ liệu thành công!", "Phục hồi", MessageBoxButtons.OK, MessageBoxIcon.Information);
             };
             restoreCard.Controls.Add(btnRestore);
 

@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Linq;
 using System.Windows.Forms;
 using LibraryManagement.Controls;
 using LibraryManagement.Helpers;
@@ -10,6 +12,10 @@ namespace LibraryManagement.Forms.Panels
 {
     public class RolePanel : UserControl
     {
+        private readonly string[] modules = { "Accounts", "Reports", "Settings" };
+        private readonly string[] actions = { "View", "Edit" };
+        private readonly Dictionary<string, CheckBox> checkboxes = new Dictionary<string, CheckBox>();
+
         public RolePanel()
         {
             DoubleBuffered = true; Dock = DockStyle.Fill; BackColor = ThemeColors.Background; AutoScroll = true;
@@ -21,19 +27,17 @@ namespace LibraryManagement.Forms.Panels
             Controls.Add(new Label { Text = "PHÂN QUYỀN", Font = ThemeColors.HeaderFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(32, 20), Size = new Size(400, 40), BackColor = Color.Transparent });
             Controls.Add(new Label { Text = "Quản lý vai trò và quyền hạn trong hệ thống", Font = ThemeColors.BodyFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(32, 62), Size = new Size(500, 22), BackColor = Color.Transparent });
 
-            // Role cards
-            string[][] roles = {
-                new[] { "🛡️", "Quản trị viên", "Toàn quyền quản lý hệ thống, tài khoản, cài đặt, sao lưu, báo cáo", "#8B5CF6" },
-                new[] { "📚", "Thủ thư", "Quản lý sách, độc giả, mượn trả sách, kiểm kê kho", "#2563EB" },
-                new[] { "📖", "Độc giả", "Tra cứu sách, xem sách đã mượn, yêu cầu gia hạn, xem thông báo", "#10B981" },
-            };
-
             int y = 100;
-            for (int ri = 0; ri < roles.Length; ri++)
+            var roles = new[] { UserRole.Admin, UserRole.ThuThu, UserRole.DocGia };
+            foreach (var role in roles)
             {
-                var role = roles[ri];
-                Panel card = new Panel { Location = new Point(32, y), Size = new Size(900, 140), BackColor = Color.Transparent };
-                Color accent = ColorTranslator.FromHtml(role[3]);
+                Panel card = new Panel { Location = new Point(32, y), Size = new Size(900, 160), BackColor = Color.Transparent };
+                Color accent = role switch
+                {
+                    UserRole.Admin => ColorTranslator.FromHtml("#8B5CF6"),
+                    UserRole.ThuThu => ColorTranslator.FromHtml("#2563EB"),
+                    _ => ColorTranslator.FromHtml("#10B981")
+                };
 
                 card.Paint += (s, e) =>
                 {
@@ -46,32 +50,50 @@ namespace LibraryManagement.Forms.Panels
                     using (var ab = new SolidBrush(accent)) g.FillPath(ab, aPath);
                 };
 
-                card.Controls.Add(new Label { Text = $"{role[0]}  {role[1]}", Font = new Font("Segoe UI", 16, FontStyle.Bold), ForeColor = accent, Location = new Point(24, 16), Size = new Size(400, 32), BackColor = Color.Transparent });
-                card.Controls.Add(new Label { Text = role[2], Font = ThemeColors.BodyFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(24, 54), Size = new Size(700, 22), BackColor = Color.Transparent });
-
-                // Permissions
-                string[] perms = ri switch
-                {
-                    0 => new[] { "Quản lý tài khoản", "Phân quyền", "Cài đặt hệ thống", "Báo cáo", "Nhật ký", "Sao lưu" },
-                    1 => new[] { "Quản lý sách", "Quản lý độc giả", "Mượn - Trả", "Kiểm kê kho" },
-                    2 => new[] { "Tra cứu sách", "Xem sách đã mượn", "Yêu cầu gia hạn", "Thông báo" },
-                    _ => Array.Empty<string>()
-                };
+                card.Controls.Add(new Label { Text = role switch { UserRole.Admin => "Quản trị viên", UserRole.ThuThu => "Thủ thư", _ => "Độc giả" }, Font = new Font("Segoe UI", 16, FontStyle.Bold), ForeColor = accent, Location = new Point(24, 16), Size = new Size(300, 32), BackColor = Color.Transparent });
+                card.Controls.Add(new Label { Text = "Quyền truy cập theo module/action", Font = ThemeColors.BodyFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(24, 52), Size = new Size(700, 22), BackColor = Color.Transparent });
 
                 int px = 24;
-                foreach (var p in perms)
+                int py = 86;
+                foreach (var module in modules)
                 {
-                    Label tag = new Label { Text = $"✓ {p}", Font = ThemeColors.SmallFont, ForeColor = accent, BackColor = Color.FromArgb(30, accent), Size = new Size(TextRenderer.MeasureText($"✓ {p}", ThemeColors.SmallFont).Width + 16, 24), Location = new Point(px, 88), TextAlign = ContentAlignment.MiddleCenter, Padding = new Padding(4, 0, 4, 0) };
-                    card.Controls.Add(tag);
-                    px += tag.Width + 8;
+                    foreach (var action in actions)
+                    {
+                        bool allowed = UserStore.HasPermission(role, module, action);
+                        string key = $"{role}:{module}:{action}";
+                        var chk = new CheckBox
+                        {
+                            Text = $"{module}.{action}",
+                            Checked = allowed,
+                            Location = new Point(px, py),
+                            Size = new Size(130, 24),
+                            Font = ThemeColors.SmallFont
+                        };
+                        checkboxes[key] = chk;
+                        card.Controls.Add(chk);
+                        px += 138;
+                    }
                 }
 
-                int count = UserStore.Users.Count(u => (ri == 0 && u.Role == UserRole.Admin) || (ri == 1 && u.Role == UserRole.ThuThu) || (ri == 2 && u.Role == UserRole.DocGia));
+                int count = UserStore.Users.Count(u => u.Role == role);
                 card.Controls.Add(new Label { Text = $"{count} người dùng", Font = ThemeColors.SubTitleFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(740, 16), Size = new Size(140, 28), BackColor = Color.Transparent, TextAlign = ContentAlignment.MiddleRight });
 
                 Controls.Add(card);
-                y += 160;
+                y += 180;
             }
+
+            var btnSave = new RoundedButton { Text = "Lưu phân quyền", Size = new Size(160, 40), Location = new Point(32, y), ButtonColor = ThemeColors.Primary, Font = ThemeColors.ButtonFont };
+            btnSave.Click += (_, _) =>
+            {
+                foreach (var kv in checkboxes)
+                {
+                    var parts = kv.Key.Split(':');
+                    var role = (UserRole)Enum.Parse(typeof(UserRole), parts[0]);
+                    LibraryDataService.SetRolePermission(role, parts[1], parts[2], kv.Value.Checked);
+                }
+                MessageBox.Show("Đã lưu cấu hình phân quyền.", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            };
+            Controls.Add(btnSave);
         }
     }
 }

@@ -49,6 +49,7 @@ namespace LibraryManagement.Forms
             string[][] menuItems = {
                 new[] { "\uE80F", "Trang chủ" },
                 new[] { "\uE77B", "Quản lý tài khoản" },
+                new[] { "\uE9D2", "Báo cáo thống kê" },
                 new[] { "\uE83D", "Phân quyền" },
                 new[] { "\uE713", "Cấu hình hệ thống" },
                 new[] { "\uE895", "Sao lưu & Phục hồi" },
@@ -72,7 +73,7 @@ namespace LibraryManagement.Forms
             {
                 if (MessageBox.Show("Bạn có chắc chắn muốn đăng xuất?", "Đăng xuất", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
-                    UserStore.CurrentUser = null;
+                    UserStore.LogoutCurrentUser();
                     Close();
                 }
             };
@@ -113,10 +114,11 @@ namespace LibraryManagement.Forms
             {
                 0 => new AdminDashboard(),
                 1 => new AccountPanel(),
-                2 => new RolePanel(),
-                3 => new SettingsPanel(),
-                4 => new BackupPanel(),
-                5 => new ActivityLogPanel(),
+                2 => new ReportPanel(),
+                3 => new RolePanel(),
+                4 => new SettingsPanel(),
+                5 => new BackupPanel(),
+                6 => new ActivityLogPanel(),
                 _ => new AdminDashboard()
             };
             panel.Dock = DockStyle.Fill;

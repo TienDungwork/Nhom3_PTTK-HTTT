@@ -55,6 +55,10 @@ namespace LibraryManagement.Forms.Panels
             btnReturn.Click += BtnReturn_Click;
             filterCard.Controls.Add(btnReturn);
 
+            var btnNotify = new RoundedButton { Text = "Gửi nhắc hạn tự động", Size = new Size(190, 36), Location = new Point(372, 64), ButtonColor = ThemeColors.Primary, Font = ThemeColors.ButtonFont };
+            btnNotify.Click += BtnNotify_Click;
+            filterCard.Controls.Add(btnNotify);
+
             Controls.Add(filterCard);
 
             dgv = new DataGridView { Location = new Point(32, 210), Size = new Size(1040, 444), Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom };
@@ -160,6 +164,13 @@ namespace LibraryManagement.Forms.Panels
 
             LibraryDataService.CompleteReturn(record, DateTime.Now);
             MessageBox.Show($"Đã xác nhận trả sách \"{record.TenSach}\".", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            ApplyFilter();
+        }
+
+        private void BtnNotify_Click(object? sender, EventArgs e)
+        {
+            var result = LibraryDataService.RunDueSoonAndOverdueNotificationJob(2);
+            MessageBox.Show($"Đã gửi thông báo cho {result.SentCount} độc giả.", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
             ApplyFilter();
         }
     }

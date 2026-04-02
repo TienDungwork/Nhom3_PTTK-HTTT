@@ -4,6 +4,7 @@ using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Windows.Forms;
 using LibraryManagement.Controls;
+using LibraryManagement.Forms.Dialogs;
 using LibraryManagement.Helpers;
 using LibraryManagement.Models;
 
@@ -79,6 +80,7 @@ namespace LibraryManagement.Forms.Panels
             dgvCategories.Columns.Add("TrangThai", "Trạng thái");
             ModernDataGridView.ApplyStyle(dgvCategories);
             dgvCategories.CellClick += DgvCategories_CellClick;
+            dgvCategories.CellDoubleClick += DgvCategories_CellDoubleClick;
             Controls.Add(dgvCategories);
 
             LoadCategories();
@@ -157,6 +159,18 @@ namespace LibraryManagement.Forms.Panels
             txtMoTa.Text = category.MoTa;
             txtViTriKe.Text = category.ViTriKe;
             chkDangSuDung.Checked = category.DangSuDung;
+        }
+
+        private void DgvCategories_CellDoubleClick(object? sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0) return;
+            string maDanhMuc = dgvCategories.Rows[e.RowIndex].Cells["MaDanhMuc"].Value?.ToString() ?? "";
+            if (string.IsNullOrWhiteSpace(maDanhMuc)) return;
+            var category = SampleData.BookCategories.FirstOrDefault(c => c.MaDanhMuc == maDanhMuc);
+            if (category == null) return;
+
+            using var dlg = new BookTitleDrillDownDialog(category.MaDanhMuc, category.TenDanhMuc);
+            dlg.ShowDialog(FindForm());
         }
 
         private void SaveCategory(bool isEditMode)

@@ -102,6 +102,8 @@ namespace LibraryManagement.Models
             }
         };
 
+        public static List<InventorySession> InventorySessions = new List<InventorySession>();
+
         public static List<string> Categories =>
             new List<string> { "Tất cả" }
                 .Concat(BookCategories.OrderBy(c => c.TenDanhMuc).Select(c => c.TenDanhMuc))

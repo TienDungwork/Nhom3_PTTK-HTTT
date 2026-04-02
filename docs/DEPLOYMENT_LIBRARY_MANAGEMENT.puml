@@ -1,0 +1,123 @@
+@startuml
+title Deployment Diagram - He thong Quan ly Thu vien
+
+' Thiết lập hướng và phong cách "Cổ điển"
+top to bottom direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultFontName Arial
+skinparam defaultFontStyle bold
+skinparam dpi 150
+
+' Cấu hình màu sắc đúng chuẩn hình mẫu của bạn
+skinparam node {
+    BackgroundColor #80D8FF
+    BorderColor #000000
+    FontColor #000000
+}
+
+skinparam database {
+    BackgroundColor #80D8FF
+    BorderColor #000000
+}
+
+skinparam artifact {
+    BackgroundColor #FFFFFF
+    BorderColor #000000
+}
+
+' --- Cấu trúc hệ thống ---
+
+node "<<device>>\nReader Workstation" as Reader {
+    artifact "Reader Desktop Client" as ReaderClient
+    artifact "Notification UI" as ReaderNotificationUI
+    artifact "Borrow / History UI" as ReaderBorrowUI
+}
+
+node "<<device>>\nLibrarian Workstation" as Librarian {
+    artifact "Librarian Desktop Client" as LibrarianClient
+    artifact "Catalog Management UI" as LibrarianCatalogUI
+    artifact "Borrow Approval / Return UI" as LibrarianBorrowUI
+    artifact "Reader Management UI" as LibrarianReaderUI
+}
+
+node "<<device>>\nAdmin Workstation" as Admin {
+    artifact "Admin Desktop Client" as AdminClient
+    artifact "User & Role Management UI" as AdminUserUI
+    artifact "Configuration / Audit UI" as AdminConfigUI
+}
+
+' Khối Network hình chữ nhật dẹt giống mẫu
+node "<<network>>\nLocal Network" as Network #91EBFF
+
+node "<<server>>\nApplication Server" as AppServer {
+    artifact "Windows Server / Linux Server" as AppOS
+
+    node "<<executionEnvironment>>\n.NET 8 Runtime" as DotNetRuntime {
+        artifact "Library Management Service" as LibraryService
+        artifact "Authentication Service" as AuthService
+        artifact "Catalog Service" as CatalogService
+        artifact "Borrow / Return Service" as BorrowService
+        artifact "Notification Service" as NotificationService
+        artifact "Reporting & Audit Service" as ReportService
+    }
+}
+
+node "<<server>>\nDatabase Server" as DbServer {
+    artifact "SQL Server / PostgreSQL" as DbEngine
+    database "LibraryManagementDB" as DB
+    artifact "APP_USERS" as TblUsers
+    artifact "READERS" as TblReaders
+    artifact "BOOK_CATEGORIES / BOOKS / BOOK_LOTS" as TblBooks
+    artifact "BORROW_RECORDS" as TblBorrows
+    artifact "NOTIFICATIONS / SYSTEM_LOGS / SYSTEM_CONFIG" as TblSystem
+}
+
+' --- Kết nối (Không ghi chú giao thức) ---
+
+Reader -- Network
+Librarian -- Network
+Admin -- Network
+
+Network -- AppServer
+AppServer -- DbServer
+
+ReaderClient -- ReaderNotificationUI
+ReaderClient -- ReaderBorrowUI
+
+LibrarianClient -- LibrarianCatalogUI
+LibrarianClient -- LibrarianBorrowUI
+LibrarianClient -- LibrarianReaderUI
+
+AdminClient -- AdminUserUI
+AdminClient -- AdminConfigUI
+
+ReaderClient -- LibraryService
+LibrarianClient -- LibraryService
+AdminClient -- LibraryService
+
+LibraryService -- AuthService
+LibraryService -- CatalogService
+LibraryService -- BorrowService
+LibraryService -- NotificationService
+LibraryService -- ReportService
+
+AuthService -- DB
+CatalogService -- DB
+BorrowService -- DB
+NotificationService -- DB
+ReportService -- DB
+
+DB -- TblUsers
+DB -- TblReaders
+DB -- TblBooks
+DB -- TblBorrows
+DB -- TblSystem
+
+' Giữ các Workstation nằm ngang hàng
+Reader -[hidden]right- Librarian
+Librarian -[hidden]right- Admin
+AppOS -[hidden]down- DotNetRuntime
+DbEngine -[hidden]down- DB
+
+@enduml

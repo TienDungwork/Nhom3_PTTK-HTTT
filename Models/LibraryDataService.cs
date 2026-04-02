@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace LibraryManagement.Models
@@ -619,12 +621,272 @@ namespace LibraryManagement.Models
                 MaDocGia = maDocGia,
                 NguoiGui = string.IsNullOrWhiteSpace(nguoiGui) ? "Thủ thư" : nguoiGui,
                 ThoiGian = DateTime.Now,
+                LoaiThongBao = InferNotificationType(tieuDe, noiDung),
                 TieuDe = tieuDe.Trim(),
                 NoiDung = noiDung.Trim(),
                 DaDoc = false
             };
             UserStore.Notifications.Add(notification);
             return notification;
+        }
+
+        public static IReadOnlyList<BorrowRecord> GetOverdueRecords(string maDocGia = "", int minDays = 0)
+        {
+            var data = SampleData.BorrowRecords
+                .Where(r => r.TrangThai == "Đang mượn")
+                .AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(maDocGia))
+                data = data.Where(r => r.MaDocGia.Contains(maDocGia.Trim(), StringComparison.OrdinalIgnoreCase));
+
+            if (minDays > 0)
+                data = data.Where(r => r.SoNgayQuaHan >= minDays);
+            else
+                data = data.Where(r => r.IsOverdue);
+
+            return data.OrderByDescending(r => r.SoNgayQuaHan).ToList();
+        }
+
+        public static (int SentCount, List<string> ReaderCodes) RunDueSoonAndOverdueNotificationJob(int dueSoonDays = 2)
+        {
+            var sentReaderCodes = new List<string>();
+            var now = DateTime.Now.Date;
+            foreach (var record in SampleData.BorrowRecords.Where(r => r.TrangThai == "Đang mượn"))
+            {
+                int daysToDue = (record.NgayHenTra.Date - now).Days;
+                bool dueSoon = daysToDue >= 0 && daysToDue <= dueSoonDays;
+                bool overdue = now > record.NgayHenTra.Date;
+                if (!dueSoon && !overdue)
+                    continue;
+
+                string duplicateTitle = overdue ? "Thông báo quá hạn" : "Nhắc nhở sắp đến hạn trả";
+                bool duplicated = UserStore.Notifications.Any(n =>
+                    n.MaDocGia == record.MaDocGia &&
+                    n.TieuDe == duplicateTitle &&
+                    n.NoiDung.Contains(record.MaMuon, StringComparison.OrdinalIgnoreCase) &&
+                    n.ThoiGian.Date == now);
+                if (duplicated)
+                    continue;
+
+                string content = overdue
+                    ? $"Phiếu {record.MaMuon} cho sách \"{record.TenSach}\" đã quá hạn {record.SoNgayQuaHan} ngày. Vui lòng trả sách và hoàn tất nghĩa vụ phạt (nếu có)."
+                    : $"Phiếu {record.MaMuon} cho sách \"{record.TenSach}\" sẽ đến hạn vào {record.NgayHenTra:dd/MM/yyyy}.";
+                SendNotificationToReader(record.MaDocGia, duplicateTitle, content, "Hệ thống");
+                if (!sentReaderCodes.Contains(record.MaDocGia))
+                    sentReaderCodes.Add(record.MaDocGia);
+            }
+
+            return (sentReaderCodes.Count, sentReaderCodes);
+        }
+
+        public static (bool Success, string Message, InventorySession? Session) StartInventorySession(string tenDot, string nguoiTao, string ghiChu = "")
+        {
+            string normalizedName = tenDot?.Trim() ?? "";
+            if (string.IsNullOrWhiteSpace(normalizedName))
+                return (false, "Tên đợt kiểm kê không được để trống.", null);
+
+            var session = new InventorySession
+            {
+                MaDotKiemKe = GenerateInventorySessionCode(),
+                TenDot = normalizedName,
+                ThoiGianTao = DateTime.Now,
+                NguoiTao = string.IsNullOrWhiteSpace(nguoiTao) ? "Thủ thư" : nguoiTao.Trim(),
+                GhiChu = ghiChu?.Trim() ?? ""
+            };
+
+            session.Items = SampleData.BookCopies
+                .OrderBy(c => c.MaQuyenSach)
+                .Select(c => new InventoryCheckItem
+                {
+                    MaQuyenSach = c.MaQuyenSach,
+                    MaSach = c.MaSach,
+                    TenSach = GetBookName(c.MaSach),
+                    TrangThaiHeThong = c.TrangThai,
+                    TrangThaiThucTe = c.TrangThai
+                })
+                .ToList();
+
+            SampleData.InventorySessions.Add(session);
+            return (true, $"Đã tạo đợt kiểm kê {session.MaDotKiemKe}.", session);
+        }
+
+        public static InventorySession? GetLatestInventorySession()
+        {
+            return SampleData.InventorySessions
+                .OrderByDescending(s => s.ThoiGianTao)
+                .FirstOrDefault();
+        }
+
+        public static (bool Success, string Message) UpdateInventoryItem(string maDotKiemKe, string maQuyenSach, string trangThaiThucTe, string ghiChu = "")
+        {
+            var session = SampleData.InventorySessions.FirstOrDefault(s => s.MaDotKiemKe == maDotKiemKe);
+            if (session == null)
+                return (false, "Không tìm thấy đợt kiểm kê.");
+
+            var item = session.Items.FirstOrDefault(i => i.MaQuyenSach == maQuyenSach);
+            if (item == null)
+                return (false, "Không tìm thấy quyển sách trong đợt kiểm kê.");
+
+            item.TrangThaiThucTe = string.IsNullOrWhiteSpace(trangThaiThucTe) ? item.TrangThaiHeThong : trangThaiThucTe.Trim();
+            item.GhiChu = ghiChu?.Trim() ?? "";
+            return (true, "Đã cập nhật kiểm kê cho quyển sách.");
+        }
+
+        public static string ExportInventoryReportToCsv(InventorySession session, string outputPath)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("MaDotKiemKe,TenDot,ThoiGianTao,NguoiTao,MaQuyenSach,MaSach,TenSach,TrangThaiHeThong,TrangThaiThucTe,ChenhLech,GhiChu");
+            foreach (var item in session.Items)
+            {
+                sb.AppendLine(string.Join(",",
+                    EscapeCsv(session.MaDotKiemKe),
+                    EscapeCsv(session.TenDot),
+                    EscapeCsv(session.ThoiGianTao.ToString("yyyy-MM-dd HH:mm:ss")),
+                    EscapeCsv(session.NguoiTao),
+                    EscapeCsv(item.MaQuyenSach),
+                    EscapeCsv(item.MaSach),
+                    EscapeCsv(item.TenSach),
+                    EscapeCsv(item.TrangThaiHeThong),
+                    EscapeCsv(item.TrangThaiThucTe),
+                    EscapeCsv(item.ChenhLech ? "Co" : "Khong"),
+                    EscapeCsv(item.GhiChu)));
+            }
+            File.WriteAllText(outputPath, sb.ToString(), Encoding.UTF8);
+            return outputPath;
+        }
+
+        public static string GetSetting(string key, string fallback = "")
+        {
+            return UserStore.SystemSettings.FirstOrDefault(s => s.SettingKey == key)?.SettingValue ?? fallback;
+        }
+
+        public static void SetSetting(string key, string value)
+        {
+            var item = UserStore.SystemSettings.FirstOrDefault(s => s.SettingKey == key);
+            if (item == null)
+                UserStore.SystemSettings.Add(new SystemSetting { SettingKey = key, SettingValue = value });
+            else
+                item.SettingValue = value;
+            UserStore.AddLog(UserStore.CurrentUser?.HoTen ?? "Hệ thống", "Cập nhật cấu hình", $"{key}={value}", "System");
+        }
+
+        public static bool GetFeatureToggle(string key, bool fallback = true)
+        {
+            return UserStore.FeatureToggles.FirstOrDefault(t => t.FeatureKey == key)?.Enabled ?? fallback;
+        }
+
+        public static void SetFeatureToggle(string key, bool enabled)
+        {
+            var item = UserStore.FeatureToggles.FirstOrDefault(t => t.FeatureKey == key);
+            if (item == null)
+                UserStore.FeatureToggles.Add(new FeatureToggle { FeatureKey = key, Enabled = enabled });
+            else
+                item.Enabled = enabled;
+            UserStore.AddLog(UserStore.CurrentUser?.HoTen ?? "Hệ thống", "Cập nhật toggle", $"{key}={(enabled ? "ON" : "OFF")}", "System");
+        }
+
+        public static string GetNotificationTemplate(string key, string fallback = "")
+        {
+            return UserStore.NotificationTemplates.FirstOrDefault(t => t.TemplateKey == key)?.Content ?? fallback;
+        }
+
+        public static void SetNotificationTemplate(string key, bool enabled, string content)
+        {
+            var item = UserStore.NotificationTemplates.FirstOrDefault(t => t.TemplateKey == key);
+            if (item == null)
+                UserStore.NotificationTemplates.Add(new NotificationTemplate { TemplateKey = key, Enabled = enabled, Content = content });
+            else
+            {
+                item.Enabled = enabled;
+                item.Content = content;
+            }
+        }
+
+        public static IReadOnlyList<RolePermission> GetRolePermissions(UserRole role)
+        {
+            return UserStore.RolePermissions.Where(r => r.Role == role.ToString()).OrderBy(r => r.Module).ThenBy(r => r.Action).ToList();
+        }
+
+        public static void SetRolePermission(UserRole role, string module, string action, bool allowed)
+        {
+            var item = UserStore.RolePermissions.FirstOrDefault(r => r.Role == role.ToString() && r.Module == module && r.Action == action);
+            if (item == null)
+                UserStore.RolePermissions.Add(new RolePermission { Role = role.ToString(), Module = module, Action = action, Allowed = allowed });
+            else
+                item.Allowed = allowed;
+            UserStore.AddLog(UserStore.CurrentUser?.HoTen ?? "Hệ thống", "Phân quyền", $"{role}:{module}:{action}={(allowed ? "Allow" : "Deny")}", "Security");
+        }
+
+        public static object GetSystemStatistics()
+        {
+            var records = SampleData.BorrowRecords;
+            var books = SampleData.Books;
+            return new
+            {
+                TongSoSach = SampleData.BookCopies.Count,
+                TongDauSach = books.Count,
+                TongDanhMuc = SampleData.BookCategories.Count,
+                TongNguoiDung = UserStore.Users.Count,
+                DangMuon = records.Count(r => r.TrangThai == "Đang mượn"),
+                DaTra = records.Count(r => r.TrangThai == "Đã trả"),
+                QuaHan = records.Count(r => r.IsOverdue),
+                TongTienPhat = records.Sum(r => r.TienPhat > 0 ? r.TienPhat : CalculateLateFee(r)),
+                ChuaNopPhat = records.Count(r => CalculateLateFee(r) > 0 && !r.DaThuPhat)
+            };
+        }
+
+        public static IReadOnlyList<(string Label, int Value)> GetBorrowStatsByTime(string period)
+        {
+            var records = SampleData.BorrowRecords;
+            IEnumerable<IGrouping<string, BorrowRecord>> groups = period switch
+            {
+                "month" => records.GroupBy(r => $"{r.NgayMuon:yyyy-MM}"),
+                "year" => records.GroupBy(r => $"{r.NgayMuon:yyyy}"),
+                _ => records.GroupBy(r => $"{r.NgayMuon:yyyy-MM-dd}")
+            };
+            return groups.OrderBy(g => g.Key).Select(g => (g.Key, g.Count())).ToList();
+        }
+
+        public static IReadOnlyList<(string Category, int Count)> GetBookStatsByCategory()
+        {
+            return SampleData.Books
+                .GroupBy(b => GetCategoryName(b.MaDanhMuc, b.TheLoai))
+                .Select(g => (g.Key, g.Sum(x => x.SoLuong)))
+                .OrderByDescending(g => g.Item2)
+                .ToList();
+        }
+
+        public static IReadOnlyList<(string Reader, int BorrowCount, int ViolationCount)> GetReaderStats()
+        {
+            return SampleData.BorrowRecords
+                .GroupBy(r => r.MaDocGia + " - " + r.TenDocGia)
+                .Select(g => (
+                    g.Key,
+                    g.Count(),
+                    g.Count(x => x.IsOverdue || x.TienPhat > 0)))
+                .OrderByDescending(x => x.Item2)
+                .ToList();
+        }
+
+        public static IReadOnlyList<(string Book, int BorrowCount)> GetBookBorrowRanking(bool descending)
+        {
+            var ranking = SampleData.BorrowRecords
+                .GroupBy(r => r.TenSach)
+                .Select(g => (g.Key, g.Count()));
+            return (descending
+                    ? ranking.OrderByDescending(x => x.Item2)
+                    : ranking.OrderBy(x => x.Item2))
+                .ToList();
+        }
+
+        public static (int DangMuon, int DaTra, bool CoQuaHan, bool DaNopPhatDayDu) GetReaderBorrowOverview(string maDocGia)
+        {
+            var records = SampleData.BorrowRecords.Where(r => r.MaDocGia == maDocGia).ToList();
+            int dangMuon = records.Count(r => r.TrangThai == "Đang mượn");
+            int daTra = records.Count(r => r.TrangThai == "Đã trả");
+            bool quaHan = records.Any(r => r.IsOverdue);
+            bool daNopDayDu = records.Where(r => CalculateLateFee(r) > 0).All(r => r.DaThuPhat);
+            return (dangMuon, daTra, quaHan, daNopDayDu);
         }
 
         private static bool IsValidIsbn(string isbn)
@@ -725,6 +987,39 @@ namespace LibraryManagement.Models
                 .Max();
 
             return "TB" + (max + 1).ToString("D3");
+        }
+
+        public static string GenerateInventorySessionCode()
+        {
+            int max = SampleData.InventorySessions
+                .Select(s => s.MaDotKiemKe)
+                .Where(code => code.StartsWith("KK", StringComparison.OrdinalIgnoreCase))
+                .Select(code => int.TryParse(code.Substring(2), out int n) ? n : 0)
+                .DefaultIfEmpty(0)
+                .Max();
+            return "KK" + (max + 1).ToString("D3");
+        }
+
+        private static string InferNotificationType(string tieuDe, string noiDung)
+        {
+            string text = (tieuDe + " " + noiDung).ToLowerInvariant();
+            if (text.Contains("quá hạn") || text.Contains("phạt"))
+                return "QuaHan";
+            if (text.Contains("đến hạn") || text.Contains("nhắc"))
+                return "NhacHan";
+            if (text.Contains("duyệt") || text.Contains("từ chối"))
+                return "MuonTra";
+            return "HeThong";
+        }
+
+        private static string EscapeCsv(string value)
+        {
+            string v = value ?? "";
+            if (v.Contains('"'))
+                v = v.Replace("\"", "\"\"");
+            return v.Contains(',') || v.Contains('"') || v.Contains('\n')
+                ? $"\"{v}\""
+                : v;
         }
     }
 }

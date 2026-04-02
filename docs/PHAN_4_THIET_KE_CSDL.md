@@ -164,3 +164,13 @@ Thực thể `BookLot` giúp giải quyết yêu cầu nghiệp vụ quan trọn
 - Thiết kế hiện tại đáp ứng yêu cầu quản lý kho sách theo lô và truy vết nhập/mượn/trả chi tiết.
 - CSDL đạt mức chuẩn hóa tốt (3NF), vẫn đảm bảo hiệu năng nhờ chỉ mục và denormalization có kiểm soát.
 - Mô hình đủ linh hoạt để mở rộng thêm báo cáo, kiểm kê định kỳ và tích hợp đồng bộ dữ liệu về sau.
+
+## 4.4. Bổ sung cho đợt triển khai req.md (2.1.4, 2.1.5, 2.1.9)
+
+- Bổ sung cột `notifications.loai_thong_bao` để phân loại thông báo (`MuonTra`, `NhacHan`, `QuaHan`, `HeThong`).
+- Bổ sung bảng `inventory_sessions` để quản lý từng đợt kiểm kê.
+- Bổ sung bảng `inventory_check_items` để lưu kết quả đối soát theo từng quyển sách trong đợt kiểm kê.
+- Bổ sung chỉ mục:
+  - `idx_notifications_loai`
+  - `idx_inventory_item_dot`
+- Các thay đổi đã cập nhật trong `database/library_management.sql`.

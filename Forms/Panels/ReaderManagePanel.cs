@@ -12,6 +12,7 @@ namespace LibraryManagement.Forms.Panels
     public class ReaderManagePanel : UserControl
     {
         private TextBox txtSearch = null!;
+        private ComboBox cboTrangThaiMuon = null!;
         private DataGridView dgv = null!;
 
         public ReaderManagePanel()
@@ -49,6 +50,24 @@ namespace LibraryManagement.Forms.Panels
             txtSearch.TextChanged += (_, _) => LoadGrid();
             Controls.Add(txtSearch);
 
+            cboTrangThaiMuon = new ComboBox
+            {
+                Location = new Point(32, 130),
+                Size = new Size(220, 30),
+                Font = ThemeColors.BodyFont,
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+            cboTrangThaiMuon.Items.AddRange(new object[]
+            {
+                "Tất cả độc giả",
+                "Đang mượn sách",
+                "Đã trả hết",
+                "Có phiếu quá hạn"
+            });
+            cboTrangThaiMuon.SelectedIndex = 0;
+            cboTrangThaiMuon.SelectedIndexChanged += (_, _) => LoadGrid();
+            Controls.Add(cboTrangThaiMuon);
+
             var btnAdd = new RoundedButton { Text = "Thêm", Size = new Size(88, 34), Location = new Point(368, 94), ButtonColor = ThemeColors.Success, Font = ThemeColors.ButtonFont };
             btnAdd.Click += BtnAdd_Click;
             Controls.Add(btnAdd);
@@ -67,8 +86,8 @@ namespace LibraryManagement.Forms.Panels
 
             dgv = new DataGridView
             {
-                Location = new Point(32, 140),
-                Size = new Size(940, 516),
+                Location = new Point(32, 170),
+                Size = new Size(940, 486),
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom
             };
             dgv.Columns.Add("MaDocGia", "Mã độc giả");
@@ -77,6 +96,9 @@ namespace LibraryManagement.Forms.Panels
             dgv.Columns.Add("SDT", "Số điện thoại");
             dgv.Columns.Add("DiaChi", "Địa chỉ");
             dgv.Columns.Add("NgayDangKy", "Ngày đăng ký");
+            dgv.Columns.Add("DangMuon", "Đang mượn");
+            dgv.Columns.Add("DaTra", "Đã trả");
+            dgv.Columns.Add("CanhBao", "Cảnh báo");
             ModernDataGridView.ApplyStyle(dgv);
             dgv.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             Controls.Add(dgv);
@@ -103,8 +125,33 @@ namespace LibraryManagement.Forms.Panels
 
             foreach (var r in data)
             {
-                dgv.Rows.Add(r.MaDocGia, r.HoTen, r.Email, r.SDT, r.DiaChi, r.NgayDangKy.ToString("dd/MM/yyyy"));
+                int dangMuon = SampleData.BorrowRecords.Count(b => b.MaDocGia == r.MaDocGia && b.TrangThai == "Đang mượn");
+                int daTra = SampleData.BorrowRecords.Count(b => b.MaDocGia == r.MaDocGia && b.TrangThai == "Đã trả");
+                int quaHan = SampleData.BorrowRecords.Count(b => b.MaDocGia == r.MaDocGia && b.IsOverdue);
+                string canhBao = quaHan > 0 ? $"Quá hạn {quaHan} phiếu" : "Bình thường";
+
+                if (!FilterByBorrowStatus(dangMuon, quaHan))
+                    continue;
+
+                int row = dgv.Rows.Add(r.MaDocGia, r.HoTen, r.Email, r.SDT, r.DiaChi, r.NgayDangKy.ToString("dd/MM/yyyy"), dangMuon, daTra, canhBao);
+                if (quaHan > 0)
+                {
+                    dgv.Rows[row].DefaultCellStyle.BackColor = ThemeColors.DangerLight;
+                    dgv.Rows[row].DefaultCellStyle.ForeColor = ThemeColors.Danger;
+                }
             }
+        }
+
+        private bool FilterByBorrowStatus(int dangMuon, int quaHan)
+        {
+            string filter = cboTrangThaiMuon.SelectedItem?.ToString() ?? "Tất cả độc giả";
+            return filter switch
+            {
+                "Đang mượn sách" => dangMuon > 0,
+                "Đã trả hết" => dangMuon == 0,
+                "Có phiếu quá hạn" => quaHan > 0,
+                _ => true
+            };
         }
 
         private Reader? GetSelectedReader()

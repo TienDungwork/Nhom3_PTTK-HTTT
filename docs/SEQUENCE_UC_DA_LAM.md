@@ -1,4 +1,4 @@
-# Danh sách UC đã làm + Biểu đồ tuần tự
+# Danh sách UC đã làm + Biểu đồ tuần tự (khớp tài liệu ca sử dụng và mã nguồn)
 
 ## 1) Danh sách UC đã triển khai
 
@@ -6,316 +6,378 @@
 - UC-1: Đăng nhập
 
 ### Thủ thư
-- UC-2: Quản lý sách
-- UC-3: Tìm kiếm phiếu mượn quá hạn
-- UC-4: Xác nhận thu phạt
-- UC-5: Xác nhận trả sách
+- UC-2: Quản lý danh mục sách
+- UC-3: Quản lý đầu sách
+- UC-4: Quản lý sách (quyển sách)
+- UC-5: Xử lý trả sách
+- UC-6: Duyệt mượn sách
+- UC-7: Quản lý thông tin độc giả
+- UC-8: Gửi thông báo
 - UC-9: Tra cứu sách
 
 ### Độc giả
-- UC-12: Lập phiếu mượn
-- UC-13: Trả sách
-- UC-16: Xem lịch sử mượn
+- UC-10: Mượn/Trả sách
+- UC-11: Xem lịch sử mượn
+- UC-15: Nhận thông báo
 
 ### Quản trị viên
-- UC-18: Quản lý người dùng
-- UC-19: Báo cáo và thống kê
-- UC-17: Quản lý hệ thống (mức khung: truy cập các phân hệ quản trị)
+- UC-12: Quản lý người dùng
+- UC-13: Báo cáo và thống kê
+
+### Chưa thấy triển khai
+- UC-14: Gia hạn mượn
 
 ---
 
-## UC-1: Đăng nhập (Người dùng)
+## UC-1: Đăng nhập
 ```puml
 @startuml
 title UC-1: Đăng nhập
 
 actor NguoiDung as "Người dùng"
-boundary LoginUI as "Màn hình Đăng nhập"
-control AuthService as "Dịch vụ Xác thực"
-database UserStore as "Cơ sở dữ liệu"
+boundary ManHinhDangNhap as "Màn hình đăng nhập"
+control XuLyDangNhap as "Xử lý đăng nhập"
+database DanhSachTaiKhoan as "Dữ liệu tài khoản"
 
-NguoiDung -> LoginUI: Nhập tên đăng nhập + mật khẩu\nNhấn Đăng nhập
-LoginUI -> AuthService: Xác thực(tên đăng nhập, mật khẩu)
-AuthService -> UserStore: Tìm tài khoản theo tên đăng nhập
-UserStore --> AuthService: Trả thông tin tài khoản + mật khẩu đã băm
-AuthService -> AuthService: So khớp mật khẩu và kiểm tra trạng thái
+NguoiDung -> ManHinhDangNhap: Nhập mã người dùng/mật khẩu + nhấn Đăng nhập
+ManHinhDangNhap -> XuLyDangNhap: Kiểm tra thông tin đăng nhập
+XuLyDangNhap -> DanhSachTaiKhoan: Tìm tài khoản hợp lệ và đang hoạt động
+DanhSachTaiKhoan --> XuLyDangNhap: Trả tài khoản hoặc rỗng
 
-alt Hợp lệ
-  AuthService --> LoginUI: Thành công + vai trò/phiên đăng nhập
-  LoginUI --> NguoiDung: Chuyển vào màn hình theo quyền
-else Không hợp lệ / bị khóa
-  AuthService --> LoginUI: Thông báo lỗi
-  LoginUI --> NguoiDung: Hiển thị lỗi đăng nhập
+alt Đăng nhập thành công
+  XuLyDangNhap --> ManHinhDangNhap: Trả thông tin người dùng
+  ManHinhDangNhap --> NguoiDung: Chuyển vào màn hình theo vai trò
+else Đăng nhập thất bại
+  XuLyDangNhap --> ManHinhDangNhap: Trả thông báo lỗi
+  ManHinhDangNhap --> NguoiDung: Hiển thị lỗi đăng nhập
 end
 @enduml
 ```
 
-## UC-2: Quản lý sách (Thủ thư)
+## UC-2: Quản lý danh mục sách
 ```puml
 @startuml
-title UC-2: Quản lý sách (Thủ thư)
+title UC-2: Quản lý danh mục sách
 
 actor ThuThu as "Thủ thư"
-boundary BookManagementUI as "Màn hình Quản lý sách"
-control BookService as "Dịch vụ Hệ thống thư viện"
-database LibraryDB as "Cơ sở dữ liệu"
+boundary ManHinhDanhMuc as "Màn hình quản lý danh mục"
+control XuLyDanhMuc as "Xử lý danh mục"
+database DuLieuDanhMuc as "Dữ liệu danh mục"
 
-ThuThu -> BookManagementUI: Nhập thông tin đầu sách (PTTK)\nvà thông tin sách (quyển)\nChọn Thêm/Sửa/Xóa
-BookManagementUI -> BookService: Lưu đầu sách()/Lưu sách()/Xóa sách()
-BookService -> BookService: Kiểm tra mã đầu sách, ISBN, năm xuất bản,\nmã sách (quyển), ngày nhập, trạng thái
+ThuThu -> ManHinhDanhMuc: Nhập thông tin + Thêm/Cập nhật/Xóa/Tìm kiếm
+ManHinhDanhMuc -> XuLyDanhMuc: Gửi yêu cầu xử lý danh mục
+XuLyDanhMuc -> DuLieuDanhMuc: Kiểm tra trùng mã/tên, ràng buộc đầu sách
+DuLieuDanhMuc --> XuLyDanhMuc: Trả kết quả xử lý
+XuLyDanhMuc --> ManHinhDanhMuc: Thành công/Thất bại + thông báo
+ManHinhDanhMuc --> ThuThu: Hiển thị kết quả và tải lại danh sách
+@enduml
+```
+
+## UC-3: Quản lý đầu sách
+```puml
+@startuml
+title UC-3: Quản lý đầu sách
+
+actor ThuThu as "Thủ thư"
+boundary ManHinhDauSach as "Màn hình quản lý đầu sách"
+control XuLyDauSach as "Xử lý đầu sách"
+database DuLieuDauSach as "Dữ liệu đầu sách"
+database DuLieuQuyenSach as "Dữ liệu quyển sách"
+
+ThuThu -> ManHinhDauSach: Nhập dữ liệu + Thêm/Cập nhật/Xóa/Tìm kiếm
+ManHinhDauSach -> XuLyDauSach: Gửi yêu cầu xử lý đầu sách
+XuLyDauSach -> XuLyDauSach: Kiểm tra mã sách, ISBN, năm xuất bản, số lượng
 
 alt Dữ liệu hợp lệ
-  BookService -> LibraryDB: Cập nhật dữ liệu đầu sách
-  BookService -> LibraryDB: Cập nhật dữ liệu sách (mỗi quyển có mã riêng,\nthuộc 1 đầu sách, có ngày nhập/trạng thái)
-  BookService --> BookManagementUI: Thành công
-  BookManagementUI --> ThuThu: Thông báo thành công + tải lại danh sách
+  XuLyDauSach -> DuLieuDauSach: Lưu đầu sách
+  XuLyDauSach -> DuLieuQuyenSach: Đồng bộ số lượng quyển
+  XuLyDauSach --> ManHinhDauSach: Trả kết quả thành công
 else Dữ liệu không hợp lệ
-  BookService --> BookManagementUI: Thông báo lỗi
-  BookManagementUI --> ThuThu: Hiển thị lỗi nhập liệu
+  XuLyDauSach --> ManHinhDauSach: Trả thông báo lỗi
 end
+
+ManHinhDauSach --> ThuThu: Hiển thị kết quả
 @enduml
 ```
 
-## UC-3: Tìm kiếm phiếu mượn quá hạn (Thủ thư)
+## UC-4: Quản lý sách (quyển sách)
 ```puml
 @startuml
-title UC-3: Tìm kiếm phiếu mượn quá hạn (Thủ thư)
+title UC-4: Quản lý sách (quyển)
 
 actor ThuThu as "Thủ thư"
-boundary OverdueUI as "Màn hình Phiếu quá hạn"
-control OverdueService as "Dịch vụ Tra cứu quá hạn"
-database BorrowDB as "Cơ sở dữ liệu"
+boundary ManHinhQuyenSach as "Màn hình quản lý quyển sách"
+control XuLyQuyenSach as "Xử lý quyển sách"
+database DuLieuQuyenSach as "Dữ liệu quyển sách"
+database DuLieuMuonTra as "Dữ liệu mượn trả"
 
-ThuThu -> OverdueUI: Nhập bộ lọc\n(Mã ĐG, Tên ĐG, Mã đầu sách, Mã sách (quyển), min ngày trễ)
-OverdueUI -> OverdueService: Tra cứu quá hạn(bộ lọc)
-OverdueService -> BorrowDB: Truy vấn phiếu mượn theo điều kiện
-BorrowDB --> OverdueService: Danh sách phiếu phù hợp
-OverdueService -> OverdueService: Tính số ngày trễ + tiền phạt\nSắp xếp giảm dần theo số ngày trễ
-OverdueService --> OverdueUI: Kết quả quá hạn
-OverdueUI --> ThuThu: Hiển thị danh sách phiếu quá hạn
-@enduml
-```
-
-## UC-4: Xác nhận thu phạt (Thủ thư)
-```puml
-@startuml
-title UC-4: Xác nhận thu phạt (Thủ thư)
-
-actor ThuThu as "Thủ thư"
-boundary OverdueUI as "Màn hình Phiếu quá hạn"
-control FineService as "Dịch vụ Hệ thống thư viện"
-database BorrowDB as "Cơ sở dữ liệu"
-
-ThuThu -> OverdueUI: Chọn phiếu quá hạn\nNhấn Xác nhận thu phạt
-OverdueUI -> FineService: Thu phạt(mã mượn)
-FineService -> BorrowDB: Tìm phiếu mượn theo mã mượn
-BorrowDB --> FineService: Thông tin phiếu mượn
-FineService -> FineService: Tính tiền phạt = số ngày trễ * đơn giá
-FineService -> BorrowDB: Cập nhật tiền phạt + trạng thái đã thu phạt
-
-alt Cập nhật thành công
-  FineService --> OverdueUI: Thành công
-  OverdueUI --> ThuThu: Thông báo thu phạt thành công
-else Cập nhật thất bại
-  FineService --> OverdueUI: Thông báo lỗi
-  OverdueUI --> ThuThu: Thông báo lỗi thu phạt
-end
-@enduml
-```
-
-## UC-5: Xác nhận trả sách (Thủ thư)
-```puml
-@startuml
-title UC-5: Xác nhận trả sách (Thủ thư)
-
-actor ThuThu as "Thủ thư"
-boundary ReturnUI as "Màn hình Phiếu quá hạn/Mượn-Trả sách"
-control ReturnService as "Dịch vụ Hệ thống thư viện"
-database BorrowDB as "Cơ sở dữ liệu"
-database BookCopyDB as "Cơ sở dữ liệu"
-
-ThuThu -> ReturnUI: Chọn phiếu/sách\nNhấn Xác nhận trả
-ReturnUI -> ReturnService: Xử lý trả sách()/Hoàn tất trả()
-ReturnService -> BorrowDB: Kiểm tra phiếu đang mượn
-BorrowDB --> ReturnService: Thông tin phiếu mượn hiện tại
-ReturnService -> ReturnService: Kiểm tra điều kiện thu phạt nếu quá hạn
-
-alt Đủ điều kiện trả
-  ReturnService -> BorrowDB: Cập nhật trạng thái phiếu = Đã trả
-  ReturnService -> BookCopyDB: Cập nhật trạng thái sách (quyển) = Có sẵn
-  ReturnService --> ReturnUI: Thành công
-  ReturnUI --> ThuThu: Trả sách thành công
-else Chưa đủ điều kiện
-  ReturnService --> ReturnUI: Lỗi chưa thu phạt
-  ReturnUI --> ThuThu: Hiển thị cảnh báo
-end
-@enduml
-```
-
-## UC-9: Tra cứu sách (Thủ thư)
-```puml
-@startuml
-title UC-6: Tra cứu sách (Thủ thư)
-
-actor ThuThu as "Thủ thư"
-boundary SearchUI as "Màn hình Tra cứu sách"
-control BookSearchService as "Dịch vụ Hệ thống thư viện"
-database LibraryDB as "Cơ sở dữ liệu"
-
-ThuThu -> SearchUI: Nhập tiêu chí tra cứu\n(tác giả, nhan đề, chủ đề, mã sách)
-SearchUI -> BookSearchService: Tra cứu sách(tiêu chí)
-BookSearchService -> LibraryDB: Truy vấn danh sách sách phù hợp
-LibraryDB --> BookSearchService: Danh sách đầu sách + danh sách sách (quyển)
-BookSearchService -> BookSearchService: Tính số lượng có sẵn theo trạng thái từng quyển
-BookSearchService --> SearchUI: Trả kết quả tìm kiếm
-SearchUI --> ThuThu: Hiển thị danh sách sách phù hợp
-@enduml
-```
-
-## UC-12: Lập phiếu mượn (Độc giả)
-```puml
-@startuml
-title UC-7: Lập phiếu mượn (Độc giả)
-
-actor DocGia as "Độc giả"
-boundary BorrowUI as "Màn hình Mượn/Trả sách"
-control BorrowService as "Dịch vụ Hệ thống thư viện"
-database LibraryDB as "Cơ sở dữ liệu"
-database BorrowDB as "Cơ sở dữ liệu"
-
-DocGia -> BorrowUI: Chọn đầu sách/quyển sách\nNhập số ngày mượn
-BorrowUI -> BorrowService: Lập phiếu mượn(mã đầu sách, mã sách (quyển), mã độc giả, ...)
-BorrowService -> LibraryDB: Kiểm tra trạng thái sẵn sàng của quyển sách
-LibraryDB --> BorrowService: Thông tin quyển sách hiện tại
-
-alt Còn sách
-  BorrowService -> LibraryDB: Cập nhật trạng thái sách (quyển) = Đang mượn
-  BorrowService -> BorrowDB: Tạo phiếu mượn (Đang mượn)
-  BorrowService --> BorrowUI: Thành công + mã sách (quyển)
-  BorrowUI --> DocGia: Hiển thị hạn trả
-else Hết sách
-  BorrowService --> BorrowUI: Báo lỗi không còn khả dụng
-  BorrowUI --> DocGia: Hiển thị lỗi
-end
-@enduml
-```
-
-## UC-13: Trả sách (Độc giả)
-```puml
-@startuml
-title UC-8: Trả sách (Độc giả)
-
-actor DocGia as "Độc giả"
-boundary ReturnUI as "Màn hình Mượn/Trả sách"
-control ReturnService as "Dịch vụ Hệ thống thư viện"
-database BorrowDB as "Cơ sở dữ liệu"
-database BookCopyDB as "Cơ sở dữ liệu"
-
-DocGia -> ReturnUI: Chọn sách đang mượn\nNhấn Trả sách
-ReturnUI -> ReturnService: Trả sách(mã sách, mã độc giả, hiện tại)
-ReturnService -> BorrowDB: Tìm phiếu đang mượn gần nhất
-BorrowDB --> ReturnService: Phiếu mượn hợp lệ
-ReturnService -> BorrowDB: Cập nhật trạng thái phiếu = Đã trả
-ReturnService -> BookCopyDB: Cập nhật trạng thái sách (quyển) = Có sẵn
-ReturnService --> ReturnUI: Kết quả xử lý
-ReturnUI --> DocGia: Thông báo trả sách
-@enduml
-```
-
-## UC-16: Xem lịch sử mượn (Độc giả)
-```puml
-@startuml
-title UC-9: Xem lịch sử mượn (Độc giả)
-
-actor DocGia as "Độc giả"
-boundary HistoryUI as "Màn hình Lịch sử mượn"
-control HistoryService as "Dịch vụ Lịch sử mượn"
-database BorrowDB as "Cơ sở dữ liệu"
-
-DocGia -> HistoryUI: Mở màn hình lịch sử mượn
-HistoryUI -> HistoryService: Lấy lịch sử mượn(mã độc giả)
-HistoryService -> BorrowDB: Lấy danh sách phiếu mượn của độc giả
-BorrowDB --> HistoryService: Danh sách mượn/trả
-HistoryService -> HistoryService: Sắp xếp theo ngày mượn\nGắn trạng thái từng phiếu
-HistoryService --> HistoryUI: Dữ liệu lịch sử đã xử lý
-HistoryUI --> DocGia: Hiển thị lịch sử đầy đủ
-@enduml
-```
-
-## UC-18: Quản lý người dùng (Admin)
-```puml
-@startuml
-title UC-10: Quản lý người dùng (Admin)
-
-actor Admin
-boundary AccountUI as "Màn hình Quản lý người dùng"
-control UserService as "Dịch vụ Quản lý người dùng"
-database UserStore as "Cơ sở dữ liệu"
-
-Admin -> AccountUI: Thêm/Sửa/Xóa/Khóa tài khoản
-AccountUI -> UserService: Lưu người dùng()/Xóa người dùng()/Khóa người dùng()
-UserService -> UserService: Kiểm tra dữ liệu tài khoản
+ThuThu -> ManHinhQuyenSach: Nhập/chọn quyển + Thêm/Cập nhật/Xóa/Tìm kiếm
+ManHinhQuyenSach -> XuLyQuyenSach: Gửi yêu cầu xử lý quyển sách
+XuLyQuyenSach -> DuLieuQuyenSach: Kiểm tra mã quyển, trạng thái, đầu sách liên quan
+XuLyQuyenSach -> DuLieuMuonTra: Kiểm tra ràng buộc giao dịch mượn
 
 alt Hợp lệ
-  UserService -> UserStore: Cập nhật dữ liệu người dùng
-  UserService --> AccountUI: Thành công
-  AccountUI --> Admin: Danh sách tài khoản được cập nhật
+  XuLyQuyenSach -> DuLieuQuyenSach: Cập nhật dữ liệu quyển
+  XuLyQuyenSach --> ManHinhQuyenSach: Trả kết quả thành công
 else Không hợp lệ
-  UserService --> AccountUI: Thông báo lỗi
-  AccountUI --> Admin: Hiển thị lỗi
+  XuLyQuyenSach --> ManHinhQuyenSach: Trả thông báo lỗi
+end
+
+ManHinhQuyenSach --> ThuThu: Thông báo + làm mới danh sách
+@enduml
+```
+
+## UC-5: Xử lý trả sách
+```puml
+@startuml
+title UC-5: Xử lý trả sách
+
+actor ThuThu as "Thủ thư"
+boundary ManHinhXuLyTra as "Màn hình xử lý trả sách"
+control XuLyTraSach as "Xử lý trả sách"
+database DuLieuMuonTra as "Dữ liệu mượn trả"
+database DuLieuQuyenSach as "Dữ liệu quyển sách"
+
+ThuThu -> ManHinhXuLyTra: Chọn phiếu mượn cần xử lý
+
+alt Thu phạt
+  ManHinhXuLyTra -> XuLyTraSach: Xác nhận thu phạt
+  XuLyTraSach -> DuLieuMuonTra: Tính tiền phạt và cập nhật đã thu phạt
+  XuLyTraSach --> ManHinhXuLyTra: Trả kết quả thu phạt
+else Xác nhận trả sách
+  ManHinhXuLyTra -> XuLyTraSach: Xác nhận trả sách
+  XuLyTraSach -> DuLieuMuonTra: Kiểm tra điều kiện trả sách
+  XuLyTraSach -> DuLieuMuonTra: Cập nhật trạng thái phiếu = Đã trả
+  XuLyTraSach -> DuLieuQuyenSach: Cập nhật trạng thái quyển = Có sẵn
+  XuLyTraSach --> ManHinhXuLyTra: Trả kết quả trả sách
+end
+
+ManHinhXuLyTra --> ThuThu: Hiển thị thông báo
+@enduml
+```
+
+## UC-6: Duyệt mượn sách
+```puml
+@startuml
+title UC-6: Duyệt mượn sách
+
+actor ThuThu as "Thủ thư"
+boundary ManHinhDuyetMuon as "Màn hình duyệt mượn"
+control XuLyDuyetMuon as "Xử lý duyệt mượn"
+database DuLieuYeuCau as "Dữ liệu yêu cầu mượn"
+database DuLieuMuonTra as "Dữ liệu mượn trả"
+database DuLieuQuyenSach as "Dữ liệu quyển sách"
+database DuLieuThongBao as "Dữ liệu thông báo"
+
+ThuThu -> ManHinhDuyetMuon: Chọn phiếu yêu cầu + Duyệt/Từ chối
+
+alt Duyệt phiếu
+  ManHinhDuyetMuon -> XuLyDuyetMuon: Duyệt phiếu yêu cầu
+  XuLyDuyetMuon -> DuLieuYeuCau: Kiểm tra trạng thái chờ duyệt
+  XuLyDuyetMuon -> DuLieuQuyenSach: Chọn quyển còn sẵn
+  XuLyDuyetMuon -> DuLieuMuonTra: Tạo phiếu mượn
+  XuLyDuyetMuon -> DuLieuYeuCau: Cập nhật trạng thái đã duyệt
+  XuLyDuyetMuon -> DuLieuThongBao: Gửi thông báo cho độc giả
+  XuLyDuyetMuon --> ManHinhDuyetMuon: Trả kết quả thành công
+else Từ chối phiếu
+  ManHinhDuyetMuon -> XuLyDuyetMuon: Từ chối phiếu yêu cầu
+  XuLyDuyetMuon -> DuLieuYeuCau: Cập nhật trạng thái từ chối + lý do
+  XuLyDuyetMuon -> DuLieuThongBao: Gửi thông báo từ chối
+  XuLyDuyetMuon --> ManHinhDuyetMuon: Trả kết quả thành công
+end
+
+ManHinhDuyetMuon --> ThuThu: Thông báo + tải lại danh sách
+@enduml
+```
+
+## UC-7: Quản lý thông tin độc giả
+```puml
+@startuml
+title UC-7: Quản lý thông tin độc giả
+
+actor ThuThu as "Thủ thư"
+boundary ManHinhDocGia as "Màn hình quản lý độc giả"
+database DuLieuDocGia as "Dữ liệu độc giả"
+database DuLieuMuonTra as "Dữ liệu mượn trả"
+database DuLieuYeuCau as "Dữ liệu yêu cầu mượn"
+
+ThuThu -> ManHinhDocGia: Thêm/Sửa/Xóa độc giả
+
+alt Thêm
+  ManHinhDocGia -> DuLieuDocGia: Kiểm tra trùng mã và thêm mới
+else Sửa
+  ManHinhDocGia -> DuLieuDocGia: Cập nhật thông tin độc giả
+else Xóa
+  ManHinhDocGia -> DuLieuMuonTra: Kiểm tra lịch sử mượn trả
+  ManHinhDocGia -> DuLieuYeuCau: Kiểm tra yêu cầu đang chờ duyệt
+  alt Không có ràng buộc
+    ManHinhDocGia -> DuLieuDocGia: Xóa độc giả
+  else Có ràng buộc
+    ManHinhDocGia --> ThuThu: Báo không thể xóa
+  end
+end
+
+ManHinhDocGia --> ThuThu: Hiển thị kết quả
+@enduml
+```
+
+## UC-8: Gửi thông báo
+```puml
+@startuml
+title UC-8: Gửi thông báo
+
+actor ThuThu as "Thủ thư"
+boundary ManHinhThongBao as "Màn hình gửi thông báo"
+control XuLyThongBao as "Xử lý thông báo"
+database DuLieuThongBao as "Dữ liệu thông báo"
+
+ThuThu -> ManHinhThongBao: Chọn độc giả + nhập nội dung + nhấn Gửi
+ManHinhThongBao -> XuLyThongBao: Gửi thông báo cho độc giả
+XuLyThongBao -> DuLieuThongBao: Tạo mã thông báo và lưu dữ liệu
+DuLieuThongBao --> XuLyThongBao: Xác nhận lưu thành công
+XuLyThongBao --> ManHinhThongBao: Trả kết quả gửi
+ManHinhThongBao --> ThuThu: Báo gửi thành công
+@enduml
+```
+
+## UC-9: Tra cứu sách
+```puml
+@startuml
+title UC-9: Tra cứu sách
+
+actor NguoiDung as "Thủ thư/Độc giả"
+boundary ManHinhTraCuu as "Màn hình tra cứu sách"
+control XuLyTraCuu as "Xử lý tra cứu sách"
+database DuLieuDauSach as "Dữ liệu đầu sách"
+database DuLieuQuyenSach as "Dữ liệu quyển sách"
+
+NguoiDung -> ManHinhTraCuu: Nhập tiêu chí (tác giả, nhan đề, chủ đề, mã sách)
+ManHinhTraCuu -> XuLyTraCuu: Gửi yêu cầu tra cứu
+XuLyTraCuu -> DuLieuDauSach: Lọc dữ liệu theo các tiêu chí
+DuLieuDauSach --> XuLyTraCuu: Trả danh sách đầu sách
+XuLyTraCuu -> DuLieuQuyenSach: Tổng hợp số quyển và trạng thái hiện có
+XuLyTraCuu --> ManHinhTraCuu: Trả kết quả tra cứu
+ManHinhTraCuu --> NguoiDung: Hiển thị danh sách hoặc thông báo không tìm thấy
+@enduml
+```
+
+## UC-10: Mượn/Trả sách (Độc giả)
+```puml
+@startuml
+title UC-10: Mượn/Trả sách (Độc giả)
+
+actor DocGia as "Độc giả"
+boundary ManHinhMuonTra as "Màn hình mượn/trả sách"
+control XuLyMuonTra as "Xử lý mượn trả"
+database DuLieuYeuCau as "Dữ liệu yêu cầu mượn"
+database DuLieuMuonTra as "Dữ liệu mượn trả"
+
+DocGia -> ManHinhMuonTra: Chọn sách + nhập ngày mượn/số ngày
+
+alt Lập phiếu mượn
+  ManHinhMuonTra -> XuLyMuonTra: Tạo yêu cầu mượn
+  XuLyMuonTra -> DuLieuYeuCau: Kiểm tra và tạo yêu cầu chờ duyệt
+  XuLyMuonTra --> ManHinhMuonTra: Trả kết quả lập phiếu
+else Trả sách
+  ManHinhMuonTra -> XuLyMuonTra: Gửi yêu cầu trả sách
+  XuLyMuonTra -> DuLieuMuonTra: Tìm phiếu mượn hợp lệ và kiểm tra điều kiện
+  XuLyMuonTra --> ManHinhMuonTra: Trả kết quả trả sách
+end
+
+ManHinhMuonTra --> DocGia: Hiển thị thông báo xử lý
+@enduml
+```
+
+## UC-11: Xem lịch sử mượn
+```puml
+@startuml
+title UC-11: Xem lịch sử mượn
+
+actor DocGia as "Độc giả"
+boundary ManHinhLichSu as "Màn hình lịch sử mượn"
+database DuLieuMuonTra as "Dữ liệu mượn trả"
+
+DocGia -> ManHinhLichSu: Mở màn hình lịch sử mượn
+ManHinhLichSu -> DuLieuMuonTra: Lấy phiếu theo mã độc giả hiện tại
+DuLieuMuonTra --> ManHinhLichSu: Trả danh sách phiếu mượn/trả
+ManHinhLichSu -> ManHinhLichSu: Sắp xếp theo ngày mượn giảm dần
+ManHinhLichSu --> DocGia: Hiển thị lịch sử và trạng thái
+@enduml
+```
+
+## UC-12: Quản lý người dùng
+```puml
+@startuml
+title UC-12: Quản lý người dùng
+
+actor QuanTriVien as "Quản trị viên"
+boundary ManHinhTaiKhoan as "Màn hình quản lý tài khoản"
+control XuLyTaiKhoan as "Xử lý tài khoản"
+database DuLieuTaiKhoan as "Dữ liệu tài khoản"
+
+QuanTriVien -> ManHinhTaiKhoan: Thêm/Sửa/Xóa/Khóa-Mở/Đổi mật khẩu
+
+alt Thêm tài khoản
+  ManHinhTaiKhoan -> XuLyTaiKhoan: Kiểm tra trùng tên đăng nhập
+  XuLyTaiKhoan -> DuLieuTaiKhoan: Thêm tài khoản mới
+else Sửa tài khoản
+  ManHinhTaiKhoan -> DuLieuTaiKhoan: Cập nhật thông tin tài khoản
+else Xóa tài khoản
+  ManHinhTaiKhoan -> DuLieuTaiKhoan: Xóa tài khoản
+else Khóa/Mở tài khoản
+  ManHinhTaiKhoan -> DuLieuTaiKhoan: Cập nhật trạng thái hoạt động
+else Đổi mật khẩu
+  ManHinhTaiKhoan -> DuLieuTaiKhoan: Cập nhật mật khẩu
+end
+
+ManHinhTaiKhoan --> QuanTriVien: Thông báo + tải lại danh sách
+@enduml
+```
+
+## UC-13: Báo cáo và thống kê
+```puml
+@startuml
+title UC-13: Báo cáo và thống kê
+
+actor QuanTriVien as "Quản trị viên"
+boundary ManHinhBaoCao as "Màn hình báo cáo"
+control XuLyBaoCao as "Xử lý báo cáo"
+database DuLieuDauSach as "Dữ liệu đầu sách"
+database DuLieuMuonTra as "Dữ liệu mượn trả"
+
+QuanTriVien -> ManHinhBaoCao: Mở chức năng báo cáo
+ManHinhBaoCao -> DuLieuDauSach: Lấy danh sách đầu sách
+ManHinhBaoCao -> XuLyBaoCao: Đồng bộ trạng thái sách
+ManHinhBaoCao -> DuLieuMuonTra: Tổng hợp số lượt mượn theo mã sách
+DuLieuMuonTra --> ManHinhBaoCao: Trả dữ liệu thống kê
+ManHinhBaoCao --> QuanTriVien: Hiển thị báo cáo tồn kho và mượn nhiều
+@enduml
+```
+
+## UC-15: Nhận thông báo
+```puml
+@startuml
+title UC-15: Nhận thông báo
+
+actor DocGia as "Độc giả"
+boundary ManHinhNhanThongBao as "Màn hình thông báo"
+database DuLieuThongBao as "Dữ liệu thông báo"
+
+DocGia -> ManHinhNhanThongBao: Mở mục Thông báo
+ManHinhNhanThongBao -> DuLieuThongBao: Lấy thông báo theo mã độc giả
+DuLieuThongBao --> ManHinhNhanThongBao: Trả danh sách thông báo
+ManHinhNhanThongBao --> DocGia: Hiển thị thông báo + số chưa đọc
+
+opt Đánh dấu đã đọc tất cả
+  DocGia -> ManHinhNhanThongBao: Nhấn Đánh dấu đã đọc tất cả
+  ManHinhNhanThongBao -> DuLieuThongBao: Cập nhật trạng thái đã đọc
+  ManHinhNhanThongBao --> DocGia: Làm mới danh sách
 end
 @enduml
 ```
 
-## UC-19: Báo cáo và thống kê (Admin)
-```puml
-@startuml
-title UC-11: Báo cáo và thống kê (Admin)
+---
 
-actor Admin
-boundary ReportUI as "Màn hình Báo cáo"
-control ReportService as "Dịch vụ Báo cáo"
-database AnalyticsDB as "Cơ sở dữ liệu"
-
-Admin -> ReportUI: Mở màn hình báo cáo thống kê
-ReportUI -> ReportService: Tạo báo cáo()
-ReportService -> AnalyticsDB: Lấy dữ liệu sách và mượn/trả
-AnalyticsDB --> ReportService: Dữ liệu thô
-ReportService -> ReportService: Tổng hợp tồn kho, lượt mượn, chỉ số liên quan
-ReportService --> ReportUI: Bộ số liệu thống kê
-ReportUI --> Admin: Hiển thị bảng/biểu báo cáo
-@enduml
-```
-
-## UC-17: Quản lý hệ thống (Admin - mức khung)
-```puml
-@startuml
-title UC-12: Quản lý hệ thống (Admin - mức khung)
-
-actor Admin
-boundary AdminUI as "Màn hình Quản trị"
-control SystemRouter as "Bộ điều hướng hệ thống"
-boundary AccountModule as "Màn hình Quản lý người dùng"
-boundary RoleModule as "Màn hình Phân quyền"
-boundary SettingsModule as "Màn hình Cấu hình hệ thống"
-boundary BackupModule as "Màn hình Sao lưu/Phục hồi"
-boundary ActivityLogModule as "Màn hình Nhật ký hoạt động"
-
-Admin -> AdminUI: Đăng nhập quyền quản trị
-AdminUI --> Admin: Hiển thị bảng điều khiển quản trị
-Admin -> AdminUI: Chọn phân hệ quản lý
-AdminUI -> SystemRouter: Điều hướng phân hệ(phân hệ)
-
-alt Quản lý tài khoản
-  SystemRouter -> AccountModule: Mở phân hệ Quản lý người dùng
-else Phân quyền
-  SystemRouter -> RoleModule: Mở phân hệ Phân quyền
-else Cấu hình hệ thống
-  SystemRouter -> SettingsModule: Mở phân hệ Cấu hình hệ thống
-else Sao lưu/Phục hồi
-  SystemRouter -> BackupModule: Mở phân hệ Sao lưu/Phục hồi
-else Nhật ký hoạt động
-  SystemRouter -> ActivityLogModule: Mở phân hệ Nhật ký hoạt động
-end
-@enduml
-```
+## Ghi chú đối chiếu
+- Nội dung biểu đồ đã Việt hóa phần hiển thị.
+- Một số quy tắc trong tài liệu ca sử dụng chưa thấy hiện thực đầy đủ trong mã nguồn hiện tại (ví dụ: khóa tài khoản sau nhiều lần nhập sai, gia hạn mượn UC-14).
