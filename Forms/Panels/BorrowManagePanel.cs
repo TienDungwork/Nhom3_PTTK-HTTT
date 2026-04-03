@@ -10,23 +10,19 @@ using LibraryManagement.Models;
 namespace LibraryManagement.Forms.Panels
 {
     /// <summary>
-    /// Quản lý mượn–trả theo 2.1.3: duyệt yêu cầu, phiếu đang mượn (trả + tình trạng sách),
-    /// danh sách đã trả, tạo phiếu tại quầy, tìm kiếm theo độc giả/sách.
+    /// 2.1.3 Quản lý mượn–trả: chỉ có 2 giao diện chính
+    /// - Duyệt mượn sách: duyệt/từ chối yêu cầu mượn
+    /// - Xử lý trả sách: danh sách đang mượn (thu phạt + xác nhận trả) và danh sách đã trả
     /// </summary>
     public class BorrowManagePanel : UserControl
     {
         private TextBox txtSearchRequest = null!;
         private TextBox txtSearchActive = null!;
         private TextBox txtSearchReturned = null!;
+
         private DataGridView dgvRequests = null!;
         private DataGridView dgvActive = null!;
         private DataGridView dgvReturned = null!;
-
-        private ComboBox cboReader = null!;
-        private DataGridView dgvCounterBooks = null!;
-        private ComboBox cboCounterCopy = null!;
-        private DateTimePicker dtpCounter = null!;
-        private TextBox txtCounterDays = null!;
 
         public BorrowManagePanel()
         {
@@ -44,11 +40,11 @@ namespace LibraryManagement.Forms.Panels
             });
             Controls.Add(new Label
             {
-                Text = "Duyệt yêu cầu → lập phiếu; kiểm tra điều kiện mượn; tiếp nhận trả và ghi nhận tình trạng sách (Tốt/Hỏng/Mất); tra cứu phiếu đã trả.",
+                Text = "1) Duyệt mượn sách (yêu cầu mượn)  2) Xử lý trả sách (thu phạt + xác nhận trả, kèm tình trạng sách)",
                 Font = ThemeColors.BodyFont,
                 ForeColor = ThemeColors.TextSecondary,
                 Location = new Point(32, 60),
-                Size = new Size(900, 36),
+                Size = new Size(980, 36),
                 BackColor = Color.Transparent
             });
 
@@ -59,20 +55,14 @@ namespace LibraryManagement.Forms.Panels
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom
             };
 
-            var tabRequest = new TabPage("1. Duyệt yêu cầu mượn") { BackColor = ThemeColors.Background };
-            var tabActive = new TabPage("2. Phiếu đang mượn & trả") { BackColor = ThemeColors.Background };
-            var tabReturned = new TabPage("3. Phiếu đã trả") { BackColor = ThemeColors.Background };
-            var tabCounter = new TabPage("4. Tạo phiếu tại quầy") { BackColor = ThemeColors.Background };
+            var tabRequest = new TabPage("Duyệt mượn sách") { BackColor = ThemeColors.Background };
+            var tabReturn = new TabPage("Xử lý trả sách") { BackColor = ThemeColors.Background };
 
             InitializeRequestTab(tabRequest);
-            InitializeActiveTab(tabActive);
-            InitializeReturnedTab(tabReturned);
-            InitializeCounterTab(tabCounter);
+            InitializeReturnTab(tabReturn);
 
             tabs.TabPages.Add(tabRequest);
-            tabs.TabPages.Add(tabActive);
-            tabs.TabPages.Add(tabReturned);
-            tabs.TabPages.Add(tabCounter);
+            tabs.TabPages.Add(tabReturn);
             Controls.Add(tabs);
         }
 
@@ -89,15 +79,36 @@ namespace LibraryManagement.Forms.Panels
             txtSearchRequest.TextChanged += (_, _) => LoadRequestGrid();
             page.Controls.Add(txtSearchRequest);
 
-            var btnApprove = new RoundedButton { Text = "Duyệt phiếu", Size = new Size(130, 36), Location = new Point(356, 11), ButtonColor = ThemeColors.Success, Font = ThemeColors.ButtonFont };
+            var btnApprove = new RoundedButton
+            {
+                Text = "Duyệt phiếu",
+                Size = new Size(130, 36),
+                Location = new Point(356, 11),
+                ButtonColor = ThemeColors.Success,
+                Font = ThemeColors.ButtonFont
+            };
             btnApprove.Click += BtnApprove_Click;
             page.Controls.Add(btnApprove);
 
-            var btnReject = new RoundedButton { Text = "Từ chối", Size = new Size(110, 36), Location = new Point(494, 11), ButtonColor = ThemeColors.Danger, Font = ThemeColors.ButtonFont };
+            var btnReject = new RoundedButton
+            {
+                Text = "Từ chối",
+                Size = new Size(110, 36),
+                Location = new Point(494, 11),
+                ButtonColor = ThemeColors.Danger,
+                Font = ThemeColors.ButtonFont
+            };
             btnReject.Click += BtnReject_Click;
             page.Controls.Add(btnReject);
 
-            var btnRefresh = new RoundedButton { Text = "Làm mới", Size = new Size(110, 36), Location = new Point(612, 11), ButtonColor = ThemeColors.Primary, Font = ThemeColors.ButtonFont };
+            var btnRefresh = new RoundedButton
+            {
+                Text = "Làm mới",
+                Size = new Size(110, 36),
+                Location = new Point(612, 11),
+                ButtonColor = ThemeColors.Primary,
+                Font = ThemeColors.ButtonFont
+            };
             btnRefresh.Click += (_, _) => LoadRequestGrid();
             page.Controls.Add(btnRefresh);
 
@@ -116,54 +127,76 @@ namespace LibraryManagement.Forms.Panels
             dgvRequests.Columns.Add("SoNgay", "Số ngày");
             dgvRequests.Columns.Add("TrangThai", "Trạng thái");
             dgvRequests.Columns.Add("NguoiDuyet", "Người duyệt");
+
             ModernDataGridView.ApplyStyle(dgvRequests);
             dgvRequests.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvRequests.MultiSelect = false;
             page.Controls.Add(dgvRequests);
 
             LoadRequestGrid();
         }
 
-        private void InitializeActiveTab(TabPage page)
+        private void InitializeReturnTab(TabPage page)
         {
+            var split = new SplitContainer
+            {
+                Dock = DockStyle.Fill,
+                Orientation = Orientation.Horizontal,
+                SplitterDistance = 280
+            };
+            page.Controls.Add(split);
+
+            // --- Panel 1: đang mượn ---
+            var activeHeader = new Panel { Dock = DockStyle.Top, Height = 52, BackColor = Color.Transparent };
             txtSearchActive = new TextBox
             {
-                Location = new Point(12, 14),
-                Size = new Size(360, 30),
+                Location = new Point(12, 12),
+                Size = new Size(380, 30),
                 Font = ThemeColors.BodyFont,
                 BorderStyle = BorderStyle.FixedSingle,
-                PlaceholderText = "Tìm theo mã phiếu, mã/tên độc giả, tên sách..."
+                PlaceholderText = "Tìm theo mã phiếu / độc giả / sách..."
             };
             txtSearchActive.TextChanged += (_, _) => LoadActiveGrid();
-            page.Controls.Add(txtSearchActive);
+            activeHeader.Controls.Add(txtSearchActive);
 
-            var btnFine = new RoundedButton { Text = "Thu phạt (quá hạn)", Size = new Size(150, 36), Location = new Point(386, 11), ButtonColor = ThemeColors.Warning, Font = ThemeColors.ButtonFont };
-            btnFine.Click += BtnCollectFine_Click;
-            page.Controls.Add(btnFine);
-
-            var btnReturn = new RoundedButton { Text = "Xác nhận trả (kiểm tra sách)", Size = new Size(220, 36), Location = new Point(544, 11), ButtonColor = ThemeColors.Success, Font = ThemeColors.ButtonFont };
-            btnReturn.Click += BtnReturn_Click;
-            page.Controls.Add(btnReturn);
-
-            var btnRefresh = new RoundedButton { Text = "Làm mới", Size = new Size(110, 36), Location = new Point(772, 11), ButtonColor = ThemeColors.Primary, Font = ThemeColors.ButtonFont };
-            btnRefresh.Click += (_, _) => { LoadActiveGrid(); LoadReturnedGrid(); };
-            page.Controls.Add(btnRefresh);
-
-            page.Controls.Add(new Label
+            var btnFine = new RoundedButton
             {
-                Text = "Danh sách: sách đang mượn. Trước khi duyệt yêu cầu, hệ thống kiểm tra: còn sách, chưa vượt số lượng, không nợ phạt quá hạn.",
-                Font = ThemeColors.SmallFont,
-                ForeColor = ThemeColors.TextSecondary,
-                Location = new Point(12, 52),
-                Size = new Size(1000, 18),
-                BackColor = Color.Transparent
-            });
-
-            dgvActive = new DataGridView
-            {
-                Location = new Point(12, 76),
-                Size = new Size(1050, 440),
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom
+                Text = "Thu phạt",
+                Size = new Size(120, 34),
+                Location = new Point(406, 10),
+                ButtonColor = ThemeColors.Warning,
+                Font = ThemeColors.ButtonFont
             };
+            btnFine.Click += BtnCollectFine_Click;
+            activeHeader.Controls.Add(btnFine);
+
+            var btnReturn = new RoundedButton
+            {
+                Text = "Xác nhận trả",
+                Size = new Size(140, 34),
+                Location = new Point(532, 10),
+                ButtonColor = ThemeColors.Success,
+                Font = ThemeColors.ButtonFont
+            };
+            btnReturn.Click += BtnReturn_Click;
+            activeHeader.Controls.Add(btnReturn);
+
+            var btnRefresh = new RoundedButton
+            {
+                Text = "Làm mới",
+                Size = new Size(110, 34),
+                Location = new Point(678, 10),
+                ButtonColor = ThemeColors.Primary,
+                Font = ThemeColors.ButtonFont
+            };
+            btnRefresh.Click += (_, _) =>
+            {
+                LoadActiveGrid();
+                LoadReturnedGrid();
+            };
+            activeHeader.Controls.Add(btnRefresh);
+
+            dgvActive = new DataGridView { Dock = DockStyle.Fill };
             dgvActive.Columns.Add("MaMuon", "Mã phiếu");
             dgvActive.Columns.Add("MaQuyen", "Mã quyển");
             dgvActive.Columns.Add("MaDocGia", "Mã ĐG");
@@ -174,36 +207,39 @@ namespace LibraryManagement.Forms.Panels
             dgvActive.Columns.Add("QuaHan", "Quá hạn");
             dgvActive.Columns.Add("TienPhat", "Tiền phạt");
             dgvActive.Columns.Add("DaThuPhat", "Thu phạt");
+
             ModernDataGridView.ApplyStyle(dgvActive);
             dgvActive.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            page.Controls.Add(dgvActive);
+            dgvActive.MultiSelect = false;
 
-            LoadActiveGrid();
-        }
+            split.Panel1.Controls.Add(dgvActive);
+            split.Panel1.Controls.Add(activeHeader);
 
-        private void InitializeReturnedTab(TabPage page)
-        {
+            // --- Panel 2: đã trả ---
+            var returnedHeader = new Panel { Dock = DockStyle.Top, Height = 52, BackColor = Color.Transparent };
             txtSearchReturned = new TextBox
             {
-                Location = new Point(12, 14),
+                Location = new Point(12, 12),
                 Size = new Size(400, 30),
                 Font = ThemeColors.BodyFont,
                 BorderStyle = BorderStyle.FixedSingle,
-                PlaceholderText = "Tìm theo mã phiếu, độc giả, tên sách..."
+                PlaceholderText = "Tìm theo mã phiếu / độc giả / sách..."
             };
             txtSearchReturned.TextChanged += (_, _) => LoadReturnedGrid();
-            page.Controls.Add(txtSearchReturned);
+            returnedHeader.Controls.Add(txtSearchReturned);
 
-            var btnRefresh = new RoundedButton { Text = "Làm mới", Size = new Size(110, 36), Location = new Point(424, 11), ButtonColor = ThemeColors.Primary, Font = ThemeColors.ButtonFont };
-            btnRefresh.Click += (_, _) => LoadReturnedGrid();
-            page.Controls.Add(btnRefresh);
-
-            dgvReturned = new DataGridView
+            var btnRefreshReturned = new RoundedButton
             {
-                Location = new Point(12, 56),
-                Size = new Size(1050, 460),
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom
+                Text = "Làm mới",
+                Size = new Size(110, 34),
+                Location = new Point(424, 10),
+                ButtonColor = ThemeColors.Primary,
+                Font = ThemeColors.ButtonFont
             };
+            btnRefreshReturned.Click += (_, _) => LoadReturnedGrid();
+            returnedHeader.Controls.Add(btnRefreshReturned);
+
+            dgvReturned = new DataGridView { Dock = DockStyle.Fill };
             dgvReturned.Columns.Add("MaMuon", "Mã phiếu");
             dgvReturned.Columns.Add("MaDocGia", "Mã ĐG");
             dgvReturned.Columns.Add("TenDocGia", "Độc giả");
@@ -214,136 +250,16 @@ namespace LibraryManagement.Forms.Panels
             dgvReturned.Columns.Add("TraMuon", "Trả muộn");
             dgvReturned.Columns.Add("TinhTrangSach", "Tình trạng sách");
             dgvReturned.Columns.Add("TienPhat", "Tiền phạt");
+
             ModernDataGridView.ApplyStyle(dgvReturned);
             dgvReturned.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            page.Controls.Add(dgvReturned);
+            dgvReturned.MultiSelect = false;
 
+            split.Panel2.Controls.Add(dgvReturned);
+            split.Panel2.Controls.Add(returnedHeader);
+
+            LoadActiveGrid();
             LoadReturnedGrid();
-        }
-
-        private void InitializeCounterTab(TabPage page)
-        {
-            page.Controls.Add(new Label
-            {
-                Text = "Chọn độc giả có trong hệ thống, chọn đầu sách và quyển còn sẵn, nhập ngày mượn và số ngày — thủ thư lập phiếu trực tiếp (không qua yêu cầu online).",
-                Font = ThemeColors.BodyFont,
-                ForeColor = ThemeColors.TextSecondary,
-                Location = new Point(12, 12),
-                Size = new Size(1000, 40),
-                BackColor = Color.Transparent
-            });
-
-            page.Controls.Add(new Label { Text = "Độc giả", Font = ThemeColors.SmallFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(12, 58), Size = new Size(200, 18), BackColor = Color.Transparent });
-            cboReader = new ComboBox { Location = new Point(12, 78), Size = new Size(420, 32), Font = ThemeColors.BodyFont, DropDownStyle = ComboBoxStyle.DropDownList };
-            foreach (var r in SampleData.Readers.OrderBy(x => x.MaDocGia))
-                cboReader.Items.Add($"{r.MaDocGia} | {r.HoTen}");
-            if (cboReader.Items.Count > 0) cboReader.SelectedIndex = 0;
-            page.Controls.Add(cboReader);
-
-            dtpCounter = new DateTimePicker { Location = new Point(448, 78), Size = new Size(140, 32), Font = ThemeColors.BodyFont, Format = DateTimePickerFormat.Short };
-            page.Controls.Add(new Label { Text = "Ngày mượn", Font = ThemeColors.SmallFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(448, 58), Size = new Size(100, 18), BackColor = Color.Transparent });
-            page.Controls.Add(dtpCounter);
-
-            txtCounterDays = new TextBox { Text = "14", Location = new Point(600, 78), Size = new Size(60, 32), Font = ThemeColors.BodyFont, TextAlign = HorizontalAlignment.Center };
-            page.Controls.Add(new Label { Text = "Số ngày mượn", Font = ThemeColors.SmallFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(600, 58), Size = new Size(120, 18), BackColor = Color.Transparent });
-            page.Controls.Add(txtCounterDays);
-
-            var btnCreate = new RoundedButton { Text = "Lập phiếu mượn", Size = new Size(180, 40), Location = new Point(680, 72), ButtonColor = ThemeColors.Success, Font = ThemeColors.ButtonFont };
-            btnCreate.Click += BtnCounterCreate_Click;
-            page.Controls.Add(btnCreate);
-
-            dgvCounterBooks = new DataGridView { Location = new Point(12, 124), Size = new Size(700, 360), Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom };
-            dgvCounterBooks.Columns.Add("MaSach", "Mã sách");
-            dgvCounterBooks.Columns.Add("TenSach", "Tên sách");
-            dgvCounterBooks.Columns.Add("ConLai", "Còn trong kho");
-            dgvCounterBooks.Columns.Add("TrangThai", "Đầu sách");
-            ModernDataGridView.ApplyStyle(dgvCounterBooks);
-            dgvCounterBooks.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvCounterBooks.SelectionChanged += (_, _) => LoadCounterCopies();
-            page.Controls.Add(dgvCounterBooks);
-
-            page.Controls.Add(new Label { Text = "Quyển sách (Có sẵn)", Font = ThemeColors.SmallFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(728, 124), Size = new Size(200, 18), BackColor = Color.Transparent });
-            cboCounterCopy = new ComboBox { Location = new Point(728, 144), Size = new Size(330, 32), Font = ThemeColors.BodyFont, DropDownStyle = ComboBoxStyle.DropDownList };
-            page.Controls.Add(cboCounterCopy);
-
-            foreach (var b in LibraryDataService.SearchBooks().OrderBy(x => x.TenSach))
-            {
-                LibraryDataService.SyncBookStatus(b);
-                dgvCounterBooks.Rows.Add(b.MaSach, b.TenSach, b.SoLuongHienCo, b.TrangThai);
-            }
-
-            LoadCounterCopies();
-        }
-
-        private string GetSelectedReaderCode()
-        {
-            if (cboReader.SelectedItem == null) return "";
-            string raw = cboReader.SelectedItem.ToString() ?? "";
-            int idx = raw.IndexOf('|');
-            return idx > 0 ? raw.Substring(0, idx).Trim() : raw.Trim();
-        }
-
-        private void LoadCounterCopies()
-        {
-            cboCounterCopy.Items.Clear();
-            if (dgvCounterBooks.SelectedRows.Count == 0) return;
-            string maSach = dgvCounterBooks.SelectedRows[0].Cells["MaSach"].Value?.ToString() ?? "";
-            foreach (var c in LibraryDataService.GetCopiesForBook(maSach, includeUnavailable: false))
-                cboCounterCopy.Items.Add($"{c.MaQuyenSach} | {c.TrangThai}");
-            if (cboCounterCopy.Items.Count > 0) cboCounterCopy.SelectedIndex = 0;
-        }
-
-        private void BtnCounterCreate_Click(object? sender, EventArgs e)
-        {
-            string maDocGia = GetSelectedReaderCode();
-            if (string.IsNullOrWhiteSpace(maDocGia))
-            {
-                MessageBox.Show("Chọn độc giả.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            if (dgvCounterBooks.SelectedRows.Count == 0)
-            {
-                MessageBox.Show("Chọn đầu sách.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            string maSach = dgvCounterBooks.SelectedRows[0].Cells["MaSach"].Value?.ToString() ?? "";
-            if (!int.TryParse(txtCounterDays.Text, out int days) || days <= 0)
-            {
-                MessageBox.Show("Số ngày mượn không hợp lệ.", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            string maQuyen = "";
-            if (cboCounterCopy.SelectedItem != null)
-            {
-                string raw = cboCounterCopy.SelectedItem.ToString() ?? "";
-                int i = raw.IndexOf(" | ", StringComparison.Ordinal);
-                maQuyen = i > 0 ? raw.Substring(0, i).Trim() : raw.Trim();
-            }
-
-            var result = LibraryDataService.CreateBorrowSlipDirect(maDocGia, maSach, dtpCounter.Value, days, maQuyen);
-            MessageBox.Show(result.Message, result.Success ? "Thành công" : "Lỗi", MessageBoxButtons.OK, result.Success ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
-            if (result.Success)
-            {
-                LoadActiveGrid();
-                LoadReturnedGrid();
-                foreach (DataGridViewRow row in dgvCounterBooks.Rows)
-                {
-                    if (row.Cells["MaSach"].Value?.ToString() == maSach)
-                    {
-                        var book = SampleData.Books.FirstOrDefault(b => b.MaSach == maSach);
-                        if (book != null)
-                        {
-                            LibraryDataService.SyncBookStatus(book);
-                            row.Cells["ConLai"].Value = book.SoLuongHienCo;
-                        }
-                        break;
-                    }
-                }
-                LoadCounterCopies();
-            }
         }
 
         private void LoadRequestGrid()
@@ -351,7 +267,9 @@ namespace LibraryManagement.Forms.Panels
             dgvRequests.Rows.Clear();
             string keyword = txtSearchRequest?.Text.Trim() ?? "";
 
-            var data = SampleData.BorrowRequests.OrderByDescending(r => r.NgayTaoYeuCau).AsEnumerable();
+            var data = SampleData.BorrowRequests
+                .OrderByDescending(r => r.NgayTaoYeuCau)
+                .AsEnumerable();
 
             if (!string.IsNullOrWhiteSpace(keyword))
             {
@@ -402,14 +320,14 @@ namespace LibraryManagement.Forms.Panels
                     r.MaDocGia.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
                     r.TenDocGia.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
                     r.TenSach.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
-                    r.MaQuyenSach.Contains(keyword, StringComparison.OrdinalIgnoreCase));
+                    (r.MaQuyenSach?.Contains(keyword, StringComparison.OrdinalIgnoreCase) ?? false));
             }
 
             foreach (var r in data)
             {
                 int quaHanNgay = r.SoNgayQuaHan;
                 decimal fine = LibraryDataService.CalculateLateFee(r);
-                r.TienPhat = fine;
+
                 int row = dgvActive.Rows.Add(
                     r.MaMuon,
                     string.IsNullOrWhiteSpace(r.MaQuyenSach) ? "—" : r.MaQuyenSach,
@@ -453,7 +371,8 @@ namespace LibraryManagement.Forms.Panels
             {
                 string traMuon = r.LaTraMuon ? "Có" : "Không";
                 string tinhTrang = string.IsNullOrWhiteSpace(r.TinhTrangSachKhiTra) ? "Tốt" : r.TinhTrangSachKhiTra;
-                decimal fine = r.TienPhat;
+                decimal fine = r.TienPhat > 0 ? r.TienPhat : LibraryDataService.CalculateLateFee(r);
+
                 dgvReturned.Rows.Add(
                     r.MaMuon,
                     r.MaDocGia,
@@ -484,7 +403,7 @@ namespace LibraryManagement.Forms.Panels
         {
             if (dgvActive.SelectedRows.Count == 0)
             {
-                MessageBox.Show("Vui lòng chọn phiếu mượn.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Vui lòng chọn phiếu mượn đang mượn cần xử lý.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return null;
             }
 
@@ -500,7 +419,8 @@ namespace LibraryManagement.Forms.Panels
             var cu = UserStore.CurrentUser;
             string nguoiDuyet = cu?.HoTen ?? cu?.Username ?? "Thủ thư";
             var result = LibraryDataService.ApproveBorrowRequest(request.MaYeuCau, nguoiDuyet);
-            MessageBox.Show(result.Message, result.Success ? "Thành công" : "Lỗi", MessageBoxButtons.OK, result.Success ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
+            MessageBox.Show(result.Message, result.Success ? "Thành công" : "Lỗi", MessageBoxButtons.OK,
+                result.Success ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
             LoadRequestGrid();
             LoadActiveGrid();
             LoadReturnedGrid();
@@ -515,7 +435,8 @@ namespace LibraryManagement.Forms.Panels
             var cu = UserStore.CurrentUser;
             string nguoiDuyet = cu?.HoTen ?? cu?.Username ?? "Thủ thư";
             var result = LibraryDataService.RejectBorrowRequest(request.MaYeuCau, nguoiDuyet, lyDo);
-            MessageBox.Show(result.Message, result.Success ? "Thành công" : "Lỗi", MessageBoxButtons.OK, result.Success ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
+            MessageBox.Show(result.Message, result.Success ? "Thành công" : "Lỗi", MessageBoxButtons.OK,
+                result.Success ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
             LoadRequestGrid();
         }
 
@@ -525,8 +446,10 @@ namespace LibraryManagement.Forms.Panels
             if (record == null) return;
 
             var result = LibraryDataService.CollectFine(record.MaMuon);
-            MessageBox.Show(result.Message, result.Success ? "Thành công" : "Lỗi", MessageBoxButtons.OK, result.Success ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
+            MessageBox.Show(result.Message, result.Success ? "Thành công" : "Lỗi", MessageBoxButtons.OK,
+                result.Success ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
             LoadActiveGrid();
+            LoadReturnedGrid();
         }
 
         private void BtnReturn_Click(object? sender, EventArgs e)
@@ -539,7 +462,8 @@ namespace LibraryManagement.Forms.Panels
                 return;
 
             var result = LibraryDataService.ReturnBookByBorrowCode(record.MaMuon, DateTime.Now, dlg.SelectedCondition);
-            MessageBox.Show(result.Message, result.Success ? "Thành công" : "Lỗi", MessageBoxButtons.OK, result.Success ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
+            MessageBox.Show(result.Message, result.Success ? "Thành công" : "Lỗi", MessageBoxButtons.OK,
+                result.Success ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
             LoadActiveGrid();
             LoadReturnedGrid();
         }
