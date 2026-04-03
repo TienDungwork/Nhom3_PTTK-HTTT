@@ -28,7 +28,8 @@ namespace LibraryManagement.Models
             string nhanDe = "",
             string chuDe = "",
             string maSach = "",
-            string danhMuc = "")
+            string danhMuc = "",
+            string trangThai = "")
         {
             var results = SampleData.Books.AsEnumerable();
             if (!string.IsNullOrWhiteSpace(keyword))
@@ -60,6 +61,14 @@ namespace LibraryManagement.Models
                 SyncBookCategory(book);
                 SyncBookStatus(book);
             }
+
+            if (!string.IsNullOrWhiteSpace(trangThai) && trangThai != "Tất cả")
+            {
+                list = list
+                    .Where(b => string.Equals(b.TrangThai, trangThai.Trim(), StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
             return list;
         }
 
@@ -379,6 +388,29 @@ namespace LibraryManagement.Models
             return (true, $"Đã xóa quyển sách {copy.MaQuyenSach}.");
         }
 
+        /// <summary>Kiểm tra điều kiện mượn: còn slot, không nợ phạt quá hạn, độc giả tồn tại.</summary>
+        public static (bool Ok, string Message) ValidateBorrowEligibility(string maDocGia)
+        {
+            if (string.IsNullOrWhiteSpace(maDocGia))
+                return (false, "Mã độc giả không hợp lệ.");
+
+            if (SampleData.Readers.All(r => r.MaDocGia != maDocGia))
+                return (false, "Độc giả chưa có trong hệ thống.");
+
+            int max = int.TryParse(GetSetting("MAX_BORROW", "5"), out int m) ? Math.Max(1, m) : 5;
+            int dangMuon = SampleData.BorrowRecords.Count(r => r.MaDocGia == maDocGia && r.TrangThai == "Đang mượn");
+            if (dangMuon >= max)
+                return (false, $"Độc giả đã mượn tối đa {max} cuốn (theo quy định thư viện).");
+
+            foreach (var r in SampleData.BorrowRecords.Where(x => x.MaDocGia == maDocGia && x.TrangThai == "Đang mượn"))
+            {
+                if (CalculateLateFee(r) > 0 && !r.DaThuPhat)
+                    return (false, "Độc giả còn phiếu quá hạn chưa nộp phạt, không được mượn thêm.");
+            }
+
+            return (true, "");
+        }
+
         public static (bool Success, string Message, string CopyCode) BorrowBook(
             string maSach,
             string maDocGia,
@@ -388,6 +420,10 @@ namespace LibraryManagement.Models
             string maQuyenSach = "",
             string maYeuCau = "")
         {
+            var check = ValidateBorrowEligibility(maDocGia);
+            if (!check.Ok)
+                return (false, check.Message, "");
+
             var book = SampleData.Books.FirstOrDefault(b => b.MaSach == maSach);
             if (book == null)
                 return (false, "Không tìm thấy đầu sách.", "");
@@ -432,6 +468,10 @@ namespace LibraryManagement.Models
             if (reader == null)
                 return (false, "Độc giả chưa được quản lý trong hệ thống.");
 
+            var el = ValidateBorrowEligibility(maDocGia);
+            if (!el.Ok)
+                return (false, el.Message);
+
             var book = SampleData.Books.FirstOrDefault(b => b.MaSach == maSach);
             if (book == null)
                 return (false, "Không tìm thấy đầu sách.");
@@ -475,6 +515,10 @@ namespace LibraryManagement.Models
 
             if (request.TrangThai != "Chờ duyệt")
                 return (false, "Yêu cầu này đã được xử lý trước đó.");
+
+            var el = ValidateBorrowEligibility(request.MaDocGia);
+            if (!el.Ok)
+                return (false, el.Message);
 
             var borrowResult = BorrowBook(
                 request.MaSach,
@@ -536,11 +580,11 @@ namespace LibraryManagement.Models
             if (tienPhatHienTai > 0 && !record.DaThuPhat)
                 return (false, "Phiếu quá hạn chưa được thu phạt, không thể xác nhận trả sách.", null);
 
-            CompleteReturn(record, ngayTra);
+            CompleteReturn(record, ngayTra, "Tốt");
             return (true, $"Trả sách \"{record.TenSach}\" thành công.", record);
         }
 
-        public static (bool Success, string Message, BorrowRecord? Record) ReturnBookByBorrowCode(string maMuon, DateTime ngayTra)
+        public static (bool Success, string Message, BorrowRecord? Record) ReturnBookByBorrowCode(string maMuon, DateTime ngayTra, string tinhTrangSachKhiTra = "Tốt")
         {
             var record = SampleData.BorrowRecords.FirstOrDefault(r => r.MaMuon == maMuon && r.TrangThai == "Đang mượn");
             if (record == null)
@@ -550,30 +594,66 @@ namespace LibraryManagement.Models
             if (tienPhatHienTai > 0 && !record.DaThuPhat)
                 return (false, "Phiếu quá hạn chưa được thu phạt, không thể xác nhận trả sách.", null);
 
-            CompleteReturn(record, ngayTra);
+            CompleteReturn(record, ngayTra, tinhTrangSachKhiTra);
+            string extra = string.Equals(tinhTrangSachKhiTra, "Tốt", StringComparison.OrdinalIgnoreCase)
+                ? ""
+                : $" Ghi nhận tình trạng sách: {tinhTrangSachKhiTra}.";
             SendNotificationToReader(
                 record.MaDocGia,
                 "Xác nhận đã trả sách",
-                $"Thư viện đã xác nhận bạn trả sách \"{record.TenSach}\" (phiếu {record.MaMuon}).",
+                $"Thư viện đã xác nhận bạn trả sách \"{record.TenSach}\" (phiếu {record.MaMuon}).{extra}",
                 "Thủ thư");
 
             return (true, $"Trả sách \"{record.TenSach}\" thành công.", record);
         }
 
-        public static void CompleteReturn(BorrowRecord record, DateTime ngayTra)
+        /// <summary>Thủ thư tiếp nhận trả: cập nhật phiếu hoàn thành, tình trạng quyển (Tốt → kho; Hỏng/Mất → ghi nhận).</summary>
+        public static void CompleteReturn(BorrowRecord record, DateTime ngayTra, string tinhTrangSachKhiTra = "Tốt")
         {
             record.NgayTraThuc = ngayTra;
             record.TrangThai = "Đã trả";
             record.TienPhat = CalculateLateFee(record, ngayTra);
+            record.TinhTrangSachKhiTra = tinhTrangSachKhiTra ?? "Tốt";
 
             if (!string.IsNullOrWhiteSpace(record.MaQuyenSach))
             {
                 var copy = SampleData.BookCopies.FirstOrDefault(c => c.MaQuyenSach == record.MaQuyenSach);
                 if (copy != null && copy.TrangThai == "Đang mượn")
-                    copy.TrangThai = "Có sẵn";
+                {
+                    string tt = record.TinhTrangSachKhiTra.Trim();
+                    if (string.Equals(tt, "Mất", StringComparison.OrdinalIgnoreCase))
+                        copy.TrangThai = "Mất";
+                    else if (string.Equals(tt, "Hỏng", StringComparison.OrdinalIgnoreCase))
+                        copy.TrangThai = "Hỏng";
+                    else
+                        copy.TrangThai = "Có sẵn";
+                }
             }
 
             RecalculateBookInventoryFromCopies(record.MaSach);
+        }
+
+        /// <summary>Thủ thư lập phiếu mượn trực tiếp tại quầy (không qua yêu cầu online).</summary>
+        public static (bool Success, string Message, string? MaMuon) CreateBorrowSlipDirect(
+            string maDocGia,
+            string maSach,
+            DateTime ngayMuon,
+            int soNgayMuon,
+            string maQuyenSach = "")
+        {
+            var reader = SampleData.Readers.FirstOrDefault(r => r.MaDocGia == maDocGia);
+            if (reader == null)
+                return (false, "Không tìm thấy độc giả.", null);
+
+            if (soNgayMuon <= 0)
+                return (false, "Số ngày mượn không hợp lệ.", null);
+
+            var br = BorrowBook(maSach, maDocGia, reader.HoTen, ngayMuon, soNgayMuon, maQuyenSach, "");
+            if (!br.Success)
+                return (false, br.Message, null);
+
+            string maMuon = SampleData.BorrowRecords.Last().MaMuon;
+            return (true, $"Đã lập phiếu mượn {maMuon}.", maMuon);
         }
 
         public static (bool Success, string Message) CollectFine(string maMuon)

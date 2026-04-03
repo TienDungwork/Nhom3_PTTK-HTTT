@@ -21,7 +21,7 @@ namespace LibraryManagement.Forms.Panels
             BackColor = ThemeColors.Background;
 
             var headerPanel = new Panel { Dock = DockStyle.Top, Height = 88, BackColor = ThemeColors.Background };
-            headerPanel.Controls.Add(new Label { Text = "QUẢN LÝ KHO SÁCH", Font = ThemeColors.HeaderFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(32, 8), Size = new Size(520, 36), BackColor = Color.Transparent });
+            headerPanel.Controls.Add(new Label { Text = "Quản lí danh mục", Font = ThemeColors.HeaderFont, ForeColor = ThemeColors.TextPrimary, Location = new Point(32, 8), Size = new Size(520, 36), BackColor = Color.Transparent });
             headerPanel.Controls.Add(new Label { Text = "Nhấn đúp danh mục: màn đầu sách đầy đủ (theo danh mục). Trong đó nhấn đúp đầu sách: màn quyển đầy đủ. Một lần nhấp danh mục: sửa form bên dưới.", Font = ThemeColors.BodyFont, ForeColor = ThemeColors.TextSecondary, Location = new Point(32, 44), Size = new Size(900, 36), BackColor = Color.Transparent });
 
             var inputCard = new Panel { BackColor = Color.White };

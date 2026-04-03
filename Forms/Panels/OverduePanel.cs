@@ -4,6 +4,7 @@ using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Windows.Forms;
 using LibraryManagement.Controls;
+using LibraryManagement.Forms.Dialogs;
 using LibraryManagement.Helpers;
 using LibraryManagement.Models;
 
@@ -162,8 +163,12 @@ namespace LibraryManagement.Forms.Panels
                 return;
             }
 
-            LibraryDataService.CompleteReturn(record, DateTime.Now);
-            MessageBox.Show($"Đã xác nhận trả sách \"{record.TenSach}\".", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            using var dlg = new ReturnBookConditionDialog(record.TenSach, record.MaMuon);
+            if (dlg.ShowDialog(FindForm()) != DialogResult.OK)
+                return;
+
+            LibraryDataService.CompleteReturn(record, DateTime.Now, dlg.SelectedCondition);
+            MessageBox.Show($"Đã xác nhận trả sách \"{record.TenSach}\" (tình trạng: {dlg.SelectedCondition}).", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
             ApplyFilter();
         }
 
