@@ -29,7 +29,10 @@ namespace LibraryManagement.Forms.Panels
             Dock = DockStyle.Fill;
             BackColor = ThemeColors.Background;
 
-            Controls.Add(new Label
+            // Cùng cách bố cục với OverduePanel: header Dock Top, vùng nội dung Dock Fill
+            // để TabControl/DataGridView luôn khớp chiều rộng client — tránh lệch header/cột.
+            var header = new Panel { Dock = DockStyle.Top, Height = 96, BackColor = Color.Transparent };
+            header.Controls.Add(new Label
             {
                 Text = "QUẢN LÝ MƯỢN TRẢ",
                 Font = ThemeColors.HeaderFont,
@@ -38,7 +41,7 @@ namespace LibraryManagement.Forms.Panels
                 Size = new Size(460, 40),
                 BackColor = Color.Transparent
             });
-            Controls.Add(new Label
+            header.Controls.Add(new Label
             {
                 Text = "1) Duyệt mượn sách (yêu cầu mượn)  2) Xử lý trả sách (thu phạt + xác nhận trả, kèm tình trạng sách)",
                 Font = ThemeColors.BodyFont,
@@ -48,12 +51,7 @@ namespace LibraryManagement.Forms.Panels
                 BackColor = Color.Transparent
             });
 
-            var tabs = new TabControl
-            {
-                Location = new Point(32, 100),
-                Size = new Size(1100, 580),
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom
-            };
+            var tabs = new TabControl { Dock = DockStyle.Fill };
 
             var tabRequest = new TabPage("Duyệt mượn sách") { BackColor = ThemeColors.Background };
             var tabReturn = new TabPage("Xử lý trả sách") { BackColor = ThemeColors.Background };
@@ -63,61 +61,77 @@ namespace LibraryManagement.Forms.Panels
 
             tabs.TabPages.Add(tabRequest);
             tabs.TabPages.Add(tabReturn);
-            Controls.Add(tabs);
+
+            // Lề ngang 32px giống OverduePanel (filter + bảng); Padding của Panel luôn áp dụng với Dock Fill
+            var tabsWrap = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = ThemeColors.Background,
+                Padding = new Padding(32, 8, 32, 24)
+            };
+            tabsWrap.Controls.Add(tabs);
+
+            Controls.Add(tabsWrap);
+            Controls.Add(header);
         }
 
         private void InitializeRequestTab(TabPage page)
         {
+            page.Padding = new Padding(0, 8, 0, 0);
+
+            var topBar = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 52,
+                BackColor = Color.Transparent
+            };
+
             txtSearchRequest = new TextBox
             {
-                Location = new Point(12, 14),
+                Location = new Point(0, 10),
                 Size = new Size(330, 30),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left,
                 Font = ThemeColors.BodyFont,
                 BorderStyle = BorderStyle.FixedSingle,
                 PlaceholderText = "Tìm theo mã YC, độc giả, mã sách..."
             };
             txtSearchRequest.TextChanged += (_, _) => LoadRequestGrid();
-            page.Controls.Add(txtSearchRequest);
+            topBar.Controls.Add(txtSearchRequest);
 
             var btnApprove = new RoundedButton
             {
                 Text = "Duyệt phiếu",
                 Size = new Size(130, 36),
-                Location = new Point(356, 11),
+                Location = new Point(344, 7),
                 ButtonColor = ThemeColors.Success,
                 Font = ThemeColors.ButtonFont
             };
             btnApprove.Click += BtnApprove_Click;
-            page.Controls.Add(btnApprove);
+            topBar.Controls.Add(btnApprove);
 
             var btnReject = new RoundedButton
             {
                 Text = "Từ chối",
                 Size = new Size(110, 36),
-                Location = new Point(494, 11),
+                Location = new Point(482, 7),
                 ButtonColor = ThemeColors.Danger,
                 Font = ThemeColors.ButtonFont
             };
             btnReject.Click += BtnReject_Click;
-            page.Controls.Add(btnReject);
+            topBar.Controls.Add(btnReject);
 
             var btnRefresh = new RoundedButton
             {
                 Text = "Làm mới",
                 Size = new Size(110, 36),
-                Location = new Point(612, 11),
+                Location = new Point(600, 7),
                 ButtonColor = ThemeColors.Primary,
                 Font = ThemeColors.ButtonFont
             };
             btnRefresh.Click += (_, _) => LoadRequestGrid();
-            page.Controls.Add(btnRefresh);
+            topBar.Controls.Add(btnRefresh);
 
-            dgvRequests = new DataGridView
-            {
-                Location = new Point(12, 56),
-                Size = new Size(1050, 460),
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom
-            };
+            dgvRequests = new DataGridView { Dock = DockStyle.Fill };
             dgvRequests.Columns.Add("MaYeuCau", "Mã YC");
             dgvRequests.Columns.Add("MaDocGia", "Mã ĐG");
             dgvRequests.Columns.Add("TenDocGia", "Độc giả");
@@ -131,9 +145,38 @@ namespace LibraryManagement.Forms.Panels
             ModernDataGridView.ApplyStyle(dgvRequests);
             dgvRequests.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvRequests.MultiSelect = false;
+            ApplyRequestColumnWeights(dgvRequests);
+
+            // Thứ tự Dock WinForms: thêm Fill trước (nền), Top sau — Top chiếm mép trên, Fill phần còn lại
             page.Controls.Add(dgvRequests);
+            page.Controls.Add(topBar);
 
             LoadRequestGrid();
+        }
+
+        /// <summary>
+        /// Cân FillWeight để cột mã gọn, cột tên rộng — tương tự cảm giác bảng Quản lý quá hạn.
+        /// </summary>
+        private static void ApplyRequestColumnWeights(DataGridView dgv)
+        {
+            if (dgv.Columns.Count == 0) return;
+            void W(string name, int weight, int minW)
+            {
+                if (dgv.Columns[name] is { } c)
+                {
+                    c.FillWeight = weight;
+                    c.MinimumWidth = minW;
+                }
+            }
+            W("MaYeuCau", 85, 72);
+            W("MaDocGia", 85, 72);
+            W("TenDocGia", 140, 120);
+            W("MaSach", 90, 72);
+            W("TenSach", 160, 100);
+            W("NgayMuonDuKien", 95, 88);
+            W("SoNgay", 75, 64);
+            W("TrangThai", 110, 88);
+            W("NguoiDuyet", 100, 88);
         }
 
         private void InitializeReturnTab(TabPage page)
